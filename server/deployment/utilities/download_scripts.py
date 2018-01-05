@@ -24,7 +24,7 @@ import os
 
 # CONSTANTS
 HERE = os.path.dirname(os.path.abspath(__file__))
-CE = os.path.join(HERE, '..', 'chrome_extension')
+CE = os.path.join(HERE, '..', '..', '..', 'client', 'deployment', 'chrome', 'page', 'scripts', 'dotapedia.js')
 JS_HLIB = os.path.join(CE, 'dotapedia.js')
 SCRIPTS = [
     [r'https://www.dota2.com/jsfeed/heropediadata?feeds=itemdata,abilitydata,herodata&v=3714588tUPGwkviXt3e&l=english&callback=HeropediaDFReceive:formatted', JS_HLIB]

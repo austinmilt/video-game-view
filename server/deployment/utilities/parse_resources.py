@@ -112,8 +112,8 @@ MAN_KEY_CST = 'ItemCost'
 MAN_ABS_SKP = ('var_type',)
 MAN_KWD_VAR = r'%{k}%'
 MAN_RGX = '(.*(?<=%s%s%s))|(.*(?<=%s%s$))'
-MAN_FIL_SRV = os.path.abspath(os.path.join(HERE, '..', 'detection', 'keys.pkl'))
-MAN_FIL_CLN = os.path.abspath(os.path.join(HERE, '..', '..', '..', 'client', 'chrome_extension', 'page', 'scripts', 'dotapedia.js'))
+MAN_FIL_SRV = os.path.abspath(os.path.join(HERE, '..', 'resources', 'keys.pkl'))
+MAN_FIL_CLN = os.path.abspath(os.path.join(HERE, '..', '..', '..', 'client', 'deployment', 'chrome', 'page', 'scripts', 'dotapedia.js'))
 MAN_V2K = lambda k: k.split(PRE_VAR)[1]
 
 TTP_NPC_BDICT = {
