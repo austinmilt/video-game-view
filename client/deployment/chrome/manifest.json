@@ -1,0 +1,47 @@
+{
+    "manifest_version": 2,
+
+    "name": "Video Game View",
+    "description": "Videogame hud viewer",
+    "version": "1.0",
+
+    "browser_action": {
+        "default_icon": "popup/assets/icon.png",
+        "default_popup": "popup/html/popup.html",
+        "default_title": "Open Video Game View"
+    },
+
+    "icons": {
+        "16": "popup/assets/icon-16.png",
+        "48": "popup/assets/icon-48.png",
+        "128": "popup/assets/icon-128.png",
+        "819": "popup/assets/icon.png"
+    },
+
+    "background": {
+        "scripts": ["background/websocket_client.js"],
+        "persistent": false
+    },
+
+    "permissions": [
+        "activeTab",
+        "storage",
+        "wss://videogameview.com/websocket",
+        "https://www.youtube.com/*",
+        "https://www.youtu.be/*"
+    ],
+    
+    "options_ui": {
+        "page": "options/options.html",
+        "chrome_style": true
+    },
+    
+    "web_accessible_resources": [
+        "page/assets/*",
+        "page/css/*",
+        "page/scripts/*",
+        "popup/assets/*",
+        "popup/scripts/*",
+        "popup/html/*"
+    ]
+}

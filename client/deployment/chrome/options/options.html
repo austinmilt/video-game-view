@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+        <link rel="stylesheet" href="../popup/scripts/tooltip.css">
+        <link rel="stylesheet" href="../popup/scripts/style.css">
+        <title>Video Game View Options</title>
+    </head>
+
+    <body>
+        <div class="monitor noclick" id="monitor">
+            <img class="monitor_brand" alt="VGV" height="10rem" width="10rem" src="../popup/assets/icon.png">
+            <div class="piece output" id="screen">
+            
+                <!-- HUD OPTIONS -->
+                <h1>HUD...</h1>
+                <hr>
+                <p>
+                    Refresh tooltips every
+                    <input type="number" id="tooltip_interval" min="0.05" value="1" step="0.05" style="width:4em;height:1em;">
+                    seconds.
+                    <img 
+                        src="assets/questionmark.png" alt="(More)" 
+                        class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                        vgvtt_addto="screen" 
+                        vgvtt_html="Sets the number of seconds between 
+                            refreshing the tooltips during video playback. 
+                            Smaller values refresh more often at a performance 
+                            cost. Also see the video analyzing rate to change 
+                            how often match information is updated during 
+                            analysis."
+                    >
+                </p>
+                <p>
+                    <input type="checkbox" id="show_boxes" value="">
+                    Display tooltip boxes.
+                    <img 
+                        src="assets/questionmark.png" alt="(More)" 
+                        class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                        vgvtt_addto="screen" 
+                        vgvtt_html="If checked, white boxes will be shown where
+                            tooltip information is available for viewing during 
+                            video playback."
+                    >
+                </p>
+                
+                
+                <!-- POPUP OPTIONS -->
+                <br><br>
+                <h1>Popup...</h1>
+                <hr>
+                <p>
+                    <input type="checkbox" id="show_warnings" value="">
+                    Show warnings.
+                    <img 
+                        src="assets/questionmark.png" alt="(More)" 
+                        class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                        vgvtt_addto="screen" 
+                        vgvtt_html="If checked, warnings from the server will 
+                        appear in job status tooltips."
+                    >
+                </p>
+
+                
+                <!-- VIDEO ANALYSIS OPTIONS -->
+                <br><br>
+                <h1>Video analysis...</h1>
+                <hr>
+                <p>
+                    Process a video frame every
+                    <input type="number" id="frame_interval" min="0.05" value="1" step="0.05" style="width:4em;height:1em;">
+                    seconds.
+                    <img 
+                        src="assets/questionmark.png" alt="(More)" 
+                        class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                        vgvtt_addto="screen" 
+                        vgvtt_html="Sets how often frames (still images) from 
+                            the video are extracted and analyzed for 
+                            information by the server. Doubling this value 
+                            will roughly halve the amount of time it takes 
+                            to get results, but will reduce the accuracy and 
+                            frequency of updates of the tooltips. Also see 
+                            the HUD tooltip refresh rate to change how often 
+                            tooltips are updated."
+                    >            
+                </p>
+                <p>
+                    Automatically (re)connect to server up to 
+                    <input type="number" id="connect_attempts" min="1" value="3" step="1" style="width:4em;height:1em;">
+                    times.
+                    <img
+                        src="assets/questionmark.png" alt="(More)" 
+                        class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                        vgvtt_addto="screen" 
+                        vgvtt_html="Sets the number of times the client should 
+                            try to reconnect to the server on a failed 
+                            connection or unexpected disconnect before 
+                            giving up."
+                    >            
+                </p>
+
+                <button id="save" class='button'>CONFIRM</button>
+                <div id="save_success" class='fullscreen_popup'><div><br><br><br>Saved!</div></div>
+                <div class="piece scanlines noclick"></div>
+                <div class="piece glow noclick"></div>
+            </div>
+            <div class="monitor_buttons">
+                <span class="monitor_button">&#x27A5;</span>
+                <span class="monitor_buttongap"></span>
+                <span class="monitor_button">&#x2714;</span>
+                <span class="monitor_buttongap"></span>
+                <span class="monitor_button">&#x2600;</span>
+                <span class="monitor_buttongap"></span>
+                <span class="monitor_button">&#x2609;</span>
+            </div>
+        </div>
+        
+        <script src="scripts/options.js"></script>
+        <script src="../popup/scripts/tooltip.js"></script>
+    </body>
+</html>

@@ -1,0 +1,10 @@
+*.pyc
+*.svg
+documentation
+ffmpeg
+server/test
+server/training_data
+server/deployment/java
+server/video_processing/lib
+server/*/out
+unused

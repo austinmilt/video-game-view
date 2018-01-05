@@ -1,0 +1,9 @@
+[Unit]
+Description=Video Game View video processing server
+
+[Service]
+ExecStart=/home/austin_w_milt/deployment/start-server.sh
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+.vgvtt {
+    position: absolute;
+    display: block;
+    width: auto;
+    height: auto;
+    word-break: normal;
+    color: white;
+    background-color: black;
+    text-align: left;
+    border-radius: 1rem;
+    padding: 0.5rem 0.7rem;
+    pointer-events: none;
+    text-overflow: clip;
+    white-space: normal;
+}

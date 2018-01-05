@@ -1,0 +1,429 @@
+@import url(https://fonts.googleapis.com/css?family=VT323);
+* {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+html {
+    height: 32rem;
+    width: 32rem;
+    max-height: 32rem;
+    max-width: 32rem;
+}
+
+/*****************************************************************************/
+/* Defaults for typical classes */
+/*****************************************************************************/
+body {
+  background: #404142;
+  color: #14fdce;
+  font-family: 'VT323';
+  font-size: 1rem;
+  -webkit-font-smoothing: none;
+  line-height: 1.5;
+  margin: 0px;
+  height: 100%;
+  width: 100%;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-variant: small-caps;
+}
+
+
+
+/*****************************************************************************/
+/* Components of the monitor  */
+/*****************************************************************************/
+
+/* pretty much everything in the monitor */
+.piece {
+  display: block;
+  height: 100%;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+
+/* for elements that should not be interactive */
+.noclick {
+  pointer-events: none;
+}
+
+
+/* for the monitor frame, which holds the screen */
+.monitor {
+    background-color: transparent;
+    border-radius: 1rem;
+    border: 1rem solid #9a9fa8;
+    border-style: inset;
+    border-top-color: #9a9fa8;
+    border-left-color: #9a9fa8;
+    border-bottom-color: #303133;
+    border-right-color: #303133;
+    -webkit-box-shadow:
+        inset 0 0 10rem rgba(0, 0, 0, 0.5),
+        inset 0 0 3rem rgba(0, 0, 0, 0.5),
+        0 0 5rem rgba(0, 0, 0, 0.5);
+    box-shadow:
+        inset 0 0 10rem rgba(0, 0, 0, 0.5),
+        inset 0 0 3rem rgba(0, 0, 0, 0.5),
+        0 0 5rem rgba(0, 0, 0, 0.5);
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+
+/* monitor output screen */
+.output {
+  -webkit-animation: crt-output 10ms infinite;
+          animation: crt-output 10ms infinite;
+  background-color: #031e11;
+  border: none;
+  text-shadow: 0rem 0.2rem 1rem #0c7b46;
+  padding: 1rem;
+  pointer-events: auto;
+  z-index: -1;
+  overflow: scroll;
+}
+
+
+/* manufacturer's logo */
+.monitor_brand {
+    position: absolute;
+    color: black;
+    text-align: center;
+    vertical-align: middle;
+    top: -0.75rem;
+    left: 49%;
+}
+
+
+/* monitor buttons */
+.monitor_buttons {
+    position: absolute;
+    left: 75%;
+    font-size: 0.7rem;
+    margin: 0px;
+    top: 100%;
+}
+
+.monitor_button {
+    display: inline-block;
+    font-family: "Lucida Sans Unicode";
+    color: #404142;
+    background: #727272;
+    line-height: 1;
+    width: 1rem;
+    vertical-align: middle;
+    text-align: center;
+    margin: 0px;
+    border: 0.05rem solid #404142; 
+    border-radius: 0.3rem;
+}
+
+.monitor_buttongap {
+    display: inline-block;
+    width: 0.1rem;
+    border: none; 
+}
+
+
+/* custom scroll bar within the screen */
+::-webkit-scrollbar {
+    width: 0.2rem;
+    height: 0.2rem;
+}
+
+::-webkit-scrollbar-track {
+    background: none; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: #0a7a67; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: white; 
+}
+
+::-webkit-scrollbar-corner {
+    background: none; 
+}
+
+
+
+/*****************************************************************************/
+/* Monitor effects  */
+/*****************************************************************************/
+
+/* small flickering effect on the screen */
+@-webkit-keyframes crt-output {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes crt-output {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+
+/* Screen glow that extends to the monitor itself */
+.glow {
+  -webkit-animation: crt-glow 60s infinite;
+          animation: crt-glow 60s infinite;
+  background: radial-gradient(circle at center, #1bd459 0%, rgba(27, 212, 89, 0.88) 58%, rgba(21, 235, 92, 0.57) 80%, rgba(19, 94, 29, 0.27) 93%, rgba(10, 23, 12, 0) 100%);
+  opacity: 0.05;
+  position: fixed;
+}
+
+@-webkit-keyframes crt-glow {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes crt-glow {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+
+/* pixel edges or other monitor resolution effect */
+.scanlines {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
+}
+
+
+/* Special formatting for selected text */
+::-moz-selection {
+  background-color: #14fdce;
+  color: #031e11;
+}
+
+::selection {
+  background-color: #14fdce;
+  color: #031e11;
+}
+
+::-moz-selection [class^="icon-"],
+::-moz-selection [class*=" icon-"] {
+  font-family: 'uuxsl';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection [class^="icon-"],
+::selection [class*=" icon-"] {
+  font-family: 'uuxsl';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-moz-selection .icon-information:before {
+  content: "\e626";
+}
+
+::selection .icon-information:before {
+  content: "\e626";
+}
+
+
+
+/*****************************************************************************/
+/* Other page styling and effects  */
+/*****************************************************************************/
+
+/* more info question mark in options */
+.more_info {
+    width:1em;
+    height:auto;
+}
+
+
+/* buttons */
+.button {
+    background: none;
+    color: #62930b;
+    border: 1pt solid #6c747f;
+    border-radius: 4pt;
+}
+
+
+/* menu elements */
+.menu_div {
+    width: 100%;
+    height: 100%;
+    margin: 0 0;
+}
+
+.menu_item {
+    height: 2.5rem;
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+.tracker_menu_item {
+    height: 2rem;
+    font-size: 2rem;
+}
+
+.menu_item:hover {
+    color: white;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+
+/* dynamic connection status */
+.connection_status:before{
+    content: 'Connecting';
+    font-size: 2rem;
+    animation-name: dotdotdot;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes dotdotdot {
+    0% {content: 'Connecting'}
+    25% {content: 'Connecting.'}
+    50% {content: 'Connecting..'}
+    75% {content: 'Connecting...'}
+    100% {content: 'Connecting'}
+}
+
+
+/* styling for server messages */
+.failed_status{
+    color: red;
+}
+
+
+.request_paragraph {
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.job_status_title {}
+
+.request {
+    font-size: 1rem;
+}
+
+.request_default {
+    color: #62930b;
+}
+
+.request_warning {
+    color: orange;
+}
+
+.request_error {
+    color: red;
+}
+
+.request_result {
+    color: white;
+}
+
+.request_result:hover {
+    text-decoration: underline white;
+    cursor: pointer;
+}
+.add_request {
+    color: white;
+}
+.add_request:hover {
+    text-decoration: underline white;
+    cursor: pointer;
+}
+
+.popup_vgvtt {
+    max-width: 50%;
+    height: auto;
+    line-height: 1.1rem;
+    animation: tooltip-appear 0.4s ease;
+}
+
+@keyframes tooltip-appear {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.has_vgvtt {
+    cursor: help;
+}
+
+/* tracker job status warning list */
+.tracker_warning_list {
+    line-height: 80%;
+    padding-left: 0;
+    list-style-position: inside;
+}
+
+
+.fullscreen_popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    background-color: rgba(0, 0, 0, 0.8);
+    text-align: center;
+    pointer-events: none;
+}
+
+.fullscreen_popup div {
+    display: inline;
+    text-align: center;
+    background-color: none;
+    color: white;
+    font-size: 3rem;
+}
