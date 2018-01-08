@@ -38,7 +38,7 @@ class VGVTooltip {
         var tooltip = document.createElement(TT_HTMLTYPE);
         tooltip.innerHTML = html;
         tooltip.classList.add(CLASS_TT);
-        if (cssClasses) { tooltip.classList.add(cssClasses); }
+        if (cssClasses) { tooltip.classList.add(...cssClasses); }
         var self = this;
         this.display = function(event) {
             if (posBy.by == 'mouse') {
@@ -80,8 +80,6 @@ class VGVTooltip {
     static _get_mousepos_percent(event) {
         var x = event.clientX;
         var y = event.clientY;
-        // var width = document.body.clientWidth;
-        // var height = document.body.clientHeight;
         var width = window.innerWidth;
         var height = window.innerHeight;
         return {x: (100.0*x)/width, y: (100.0*y)/height};

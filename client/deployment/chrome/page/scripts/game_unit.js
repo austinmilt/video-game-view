@@ -417,7 +417,7 @@ class GameUnitLibrary {
     }
     
     html_talents(ids) {
-        var output = '<table class="talent" width=100%>';
+        var output = '<table class="talent">';
         
         // var output = '<div class=\'talent\'>';
         var left;

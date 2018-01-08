@@ -62,11 +62,10 @@
     font-size: 1em;
 }
 
-.talent-tooltip { width: 1000px; }
-/* .talent-tooltip { width: 1000px; display: inline-block; } */
-table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%;}
-.talent-left {text-align: right; border-right: 1px solid white;}
-.talent-right {text-align: left;}
+.talent-tooltip { width: auto; height: auto; display: inline-block;}
+table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%; white-space: nowrap}
+.talent-left {text-align: right; border-right: 1px solid white; white-space: nowrap}
+.talent-right {text-align: left; white-space: nowrap}
 
 
 /* settings for youtube player elements */
