@@ -8,3 +8,4 @@ server/deployment/java
 server/video_processing/lib
 server/*/out
 unused
+client/deployment/chrome.zip

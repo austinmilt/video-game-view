@@ -22,6 +22,7 @@ var youtubeVideo;
 var videoControls;
 var youtubePlayer;
 var hero = {'hero': null};
+var vgvContainer = null;
 
 var refreshInterval = 1000.0; // milliseconds
 var showBorders = false;
@@ -84,6 +85,9 @@ var TALENT_CLASS = {
 function activate_tooltips() {
     youtubeVideo = document.getElementsByClassName('video-stream')[0];
     youtubePlayer = document.getElementById('movie_player');
+    vgvContainer = document.createElement('div');
+    vgvContainer.classList.add('vgv-container');
+    youtubePlayer.appendChild(vgvContainer);
     document.getElementsByClassName('ytp-chrome-bottom')[0].style.zIndex = '100';
     refreshID = setInterval(create_ability_divs, refreshInterval);
 }
@@ -93,41 +97,57 @@ function activate_tooltips() {
 // FUNCTIONS //////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+// update the positioning of the container div
+function update_container() {
+    var vbox = youtubeVideo.getBoundingClientRect();
+    vgvContainer.style.left = youtubeVideo.offsetLeft + 'px';
+    vgvContainer.style.top = youtubeVideo.offsetTop = 'px';
+    vgvContainer.style.width = vbox.width + 'px';
+    vgvContainer.style.height = vbox.height + 'px';
+}
+
+
 // function for creating a single ability div with known attributes
+var tooltips = new Set();
+var divs = new Set();
 function create_ability_div(abilityClass, id) {
     var abilityDiv = document.createElement('div');
+    divs.add(abilityDiv);
     abilityDiv.className = abilityClass;
     abilityDiv.setAttribute('abilityname', id);
     abilityDiv.setAttribute('display', 'inline');
     abilityDiv.setAttribute('title', '');
     if (showBorders) { abilityDiv.style.borderStyle = 'solid'; }
     else { abilityDiv.style.borderStyle = 'none'; }
-    youtubePlayer.appendChild(abilityDiv);
+    vgvContainer.appendChild(abilityDiv);
     
     // make the tooltip
-    var divClass = 'ability-tooltip';
+    var divClasses = ['ability-tooltip'];
     var html;
     if (abilityClass.includes('talent')) {
-        divClass += ' talent-tooltip';
+        divClasses.push('talent-tooltip');
         html = TOOLTIPS.html_talents(id.split(' '));
     }
     else {
         html = TOOLTIPS.html(id);
     }
-    // console.log(html);
-    $(abilityDiv).tooltip({content: html, classes: {'ui-tooltip': divClass}});
+    if (!html.trim()) { html = 'Empty slot.'; }
+    tooltips.add(new VGVTooltip(abilityDiv, vgvContainer, html, divClasses, {'by': 'element', 'direction': 'north'}));
 }
 
 
 // function for creating ability divs
 function create_ability_divs() {
-
+    
     // check that the user hasnt gone to a new webpage and thus we need
     //  to stop (for now)
     if (window.location.href != URL) {
         URL = window.location.href
         stop();
     }
+    
+    // update the vgvg container
+    update_container();
     
     // only update the ability divs if the hero has changed from the
     // last check
@@ -160,21 +180,26 @@ function create_ability_divs() {
         var talentClass = TALENT_CLASS[hero.abilities.length];
         create_ability_div(talentClass, hero.talents.join(' '));
     }
+    
+    // console.log(divs);
 }
 
     
     
 // function for clearing ability divs in abilities container
 function clear_ability_divs() {
-    $(".ui-tooltip-content").parents('div').remove(); // clear the current tooltips
-    var curDiv = youtubePlayer.firstChild;
-    while (!(curDiv === null)) {
-        nextDiv = curDiv.nextSibling;
-        if (curDiv.className.includes('ability')) {
-            curDiv.parentElement.removeChild(curDiv);
-        }
-        curDiv = nextDiv;
-    }
+    for (var tt of tooltips) { tt.remove(); tooltips.delete(tt); }
+    for (var div of divs) { div.remove(); divs.delete(div); }
+    while (vgvContainer.lastChild) { vgvContainer.remove(vgvContainer.lastChild); }
+    // $(".ui-tooltip-content").parents('div').remove(); // clear the current tooltips
+    // var curDiv = youtubePlayer.firstChild;
+    // while (!(curDiv === null)) {
+        // nextDiv = curDiv.nextSibling;
+        // if (curDiv.className.includes('ability')) {
+            // curDiv.parentElement.removeChild(curDiv);
+        // }
+        // curDiv = nextDiv;
+    // }
 }
 
 

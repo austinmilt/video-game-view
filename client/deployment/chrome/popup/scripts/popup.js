@@ -39,6 +39,12 @@
 // X hook up the frame interval on the server (already being sent by websocket client)
 // X websocket_client.js isnt correctly using the server reconnect attempts
 // o prevent popup from re-injecting content scripts that are already in.
+// o user disconnecting from server and then reconnecting doesnt work
+// o hovering over tracker status when tooltip killed leaves tooltip in page
+// o when user logs into youtube resets the client (info lost)
+// o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
+// o some clients being logged out (websocket closes) when popup closes(?) dunno why
+// o talent tooltip is not getting all its styling (has default border-radius and color)
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;
@@ -607,13 +613,15 @@ function inject_css(cssPath) {
 // function to inject scripts into activated tab
 function inject_scripts() {
     return new Promise(function(resolve, reject) {
-        inject_css('page/scripts/tooltip_manager.css')
+        inject_css('popup/scripts/tooltip.css')
+        .then(function(){inject_css('page/scripts/tooltip_manager.css');})
         .then(function(){inject_js('page/scripts/jquery-3.2.1.min.js');})
         .then(function(){inject_js('page/scripts/jquery-ui.js');})
         .then(function(){inject_js('page/scripts/master.js');})
         .then(function(){inject_js('page/scripts/dotapedia.js');})
         .then(function(){inject_js('page/scripts/hero_timer.js');})
         .then(function(){inject_js('page/scripts/game_unit.js');})
+        .then(function(){inject_js('popup/scripts/tooltip.js');})
         .then(function(){inject_js('page/scripts/tooltip_manager.js')})
         .then(function(){resolve();});
     });

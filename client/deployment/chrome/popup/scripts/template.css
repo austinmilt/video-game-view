@@ -1,0 +1,16 @@
+.vgvtt {
+    color: orange;
+}
+
+.ability_name_header {
+    font-size: 3rem;
+    color: white;
+}
+
+.section_div {
+    border: 2px solid gray;
+}
+
+.bold_descriptor {
+    font-weight: bold;
+}

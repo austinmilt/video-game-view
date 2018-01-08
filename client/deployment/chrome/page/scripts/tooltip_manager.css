@@ -1,15 +1,22 @@
+/* set global variables */
+:root {
+    --tooltip-width: 25em;
+}
+
+
 /* settings for the ability tooltips */
 .ability-tooltip {
 	position: absolute;
 	text-align: left;
 	float: left;
 	border: solid white 1px;
+    border-radius: 0;
 	background-color: #111;
-	width: 25em;
+	width: var(--tooltip-width);
 	padding: 10px;
     font-size: 1em;
     color: #e0e0e0;
-	z-index: 100;
+	z-index: 301;
 }
 
 .ability-name {
@@ -32,14 +39,14 @@
 }
 
 .extra-desc p {
-    color: #A9CCE3 !important;
+    color: #A9CCE3;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     padding: 0em;
 }
 
 .detail-value {
-    color: #757575 !important;
+    color: #757575;
 }
 
 .core-desc {
@@ -47,24 +54,35 @@
 }
 
 .scepter-desc {
-    color: #d7be5b !important; 
+    color: #d7be5b; 
 }
 
 .lore {
-    color: #757575 !important;
+    color: #757575;
     font-size: 1em;
 }
 
-.talent-tooltip {width: auto; display: inline-block;}
+.talent-tooltip { width: 1000px; }
+/* .talent-tooltip { width: 1000px; display: inline-block; } */
 table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%;}
 .talent-left {text-align: right; border-right: 1px solid white;}
 .talent-right {text-align: left;}
 
 
 /* settings for youtube player elements */
-.hero-name-container {
+.vgv-container {
     position: relative;
-    z-index: 100;
+    display: block;
+    border: none;
+    background: none;
+    z-index: 101;
+    pointer-events: none;
+}
+
+
+.hero-name-container {
+    position: absolute;
+    z-index: 102;
     left: 29.4%;
     top: 85.1%;
     height: 1.4%;
@@ -73,8 +91,8 @@ table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%;}
 
 
 .game-clock {
-    position: relative;
-    z-index: 100;
+    position: absolute;
+    z-index: 102;
     left: 48.0%;
     top: 2.4%;
     height: 1.0%;
@@ -88,6 +106,7 @@ table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%;}
     border-width: 1px;
     border-color: white;
     z-index: 300;
+    pointer-events: auto;
 }
 
 
