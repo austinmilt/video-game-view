@@ -344,9 +344,14 @@ h1 {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    margin: 0;
 }
 
 .job_status_title {}
+
+.delete_tracker { color: red; }
+
+.delete_tracker:hover { cursor: pointer; }
 
 .request {
     font-size: 1rem;

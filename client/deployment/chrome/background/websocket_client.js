@@ -35,8 +35,8 @@ var userDisconnectFlag = false;
 var frameInterval = 1.0;
 var connectAttemptsMax = 3;
 chrome.storage.sync.get(['connect_attempts', 'frame_interval'], function(e) {
-    if (e['connect_attempts']) { connectAttemptsMax = e['connect_attempts']; }
-    if (e['frame_interval']) { frameInterval = e['frame_interval']; }
+    if (e['connect_attempts'] !== undefined) { connectAttemptsMax = e['connect_attempts']; }
+    if (e['frame_interval'] !== undefined) { frameInterval = e['frame_interval']; }
 });
 
 
@@ -250,7 +250,6 @@ function send_request(video, replays, title) {
             // 'replays': [[0.0, 'https://www.dropbox.com/s/achxrbapg6spnlu/replay_r01.dem?dl=1']],
             // 'request_id': Math.floor(Math.random()*10000000000)
         };
-        console.log(request);
         CLIENT.socket.send(JSON.stringify(request));
         requestID = request['request_id'];
         state['id_order'].push(requestID);
@@ -293,6 +292,43 @@ function tell_popup_state(port) {
 function set_popup_state(newState) { state['popup'] = newState; }
 
 
+// remove a job's results and cancel the job if it's running
+function remove_job(jobID) {
+    
+    // tell the server to kill this job
+    // IMPLEMENT THIS
+    // request = {
+        // 'type': 'kill_job',
+        // 'request_id': jobID
+    // }
+    // CLIENT.socket.send(JSON.stringify(request));
+    
+    // should probably wait for answer from server before doing this, but...
+    // tell popups to delete this tracker
+    post_to_ports({'type': 'remove_tracker', 'tracker': jobID});
+    
+    // remove data from the background state
+    delete state[jobID];
+    
+    // update the short ids of the other jobs
+    var newOrder = []
+    var newCount = 0;
+    var newShorts = {};
+    for (var job of state['id_order']) {
+        if (job != jobID) {
+            newOrder.push(job);
+            state[job]['short_id'] = newCount + 1;
+            newShorts[job] = state[job]['short_id'];
+            newCount += 1;
+        }
+    }
+    state['id_order'] = newOrder;
+    requestCount = newCount;
+    post_to_ports({'type': 'update_shorts', 'data': newShorts});
+    
+}
+
+
 // when a popup asks for the viewer state, send along
 // function tell_viewer_state(port) { 
     // post_to_port(port, {type: 'viewer_state'});
@@ -319,6 +355,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         else if (msg.action == 'get_tracker_state') { tell_tracker_state(port); }
         else if (msg.action == 'get_popup_state') { tell_popup_state(port); }
         else if (msg.action == 'set_popup_state') { set_popup_state(msg.state); }
+        else if (msg.action == 'remove_job') { remove_job(msg.job); }
         
         // CANT WORK BECAUSE EVERY TAB CAN HAVE A DIFFERENT VIEWER STATE
         // else if (msg.action == 'get_viewer_state') { tell_viewer_state(port); }

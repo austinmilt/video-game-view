@@ -27,8 +27,8 @@ var vgvContainer = null;
 var refreshInterval = 1000.0; // milliseconds
 var showBorders = false;
 chrome.storage.sync.get(['tooltip_interval', 'show_boxes'], function(e){
-    if (e['tooltip_interval']) { refreshInterval = e['tooltip_interval'] * 1000.0; }
-    if (e['show_boxes']) { showBorders = e['show_boxes']; }
+    if (e['tooltip_interval'] !== undefined) { refreshInterval = e['tooltip_interval'] * 1000.0; }
+    if (e['show_boxes'] !== undefined) { showBorders = e['show_boxes']; }
 });
 
 var refreshID;

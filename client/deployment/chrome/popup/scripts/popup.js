@@ -17,9 +17,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
+// o server accept job cancelation requests and cancel running jobs
 // o function to stop tooltips
 // o menu to stop tooltips
-// o ability to delete trackers (and/or all trackers)
 // o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
 // o user disconnecting from server and then reconnecting doesnt work
 // o when user logs into youtube resets the client (info lost)
@@ -27,6 +27,8 @@
 // o some clients being logged out (websocket closes) when popup closes(?) dunno why
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
 // o store tracker state in chrome.storage.sync and reload on opening
+// X ability to delete trackers (and/or all trackers)
+// X add option to skip confirmation of job deletion
 // X talent tooltip is not getting all its styling (has default border-radius and color)
 // X hovering over tracker status when tooltip killed leaves tooltip in page
 // X prevent popup from re-injecting content scripts that are already in.
@@ -61,6 +63,7 @@ const TYPE_WARNING = "warning";
 const TYPE_ERROR = "error";
 const TYPE_RESULT = "result";
 const TYPE_RECEIVED = "received";
+const CLASS_DELJOB = ['request', 'delete_tracker'];
 const CLASS_JOB = ['request', 'request_default', 'job_status_title', 'has_vgvtt'];
 const CLASS_REQPAR = ['request_paragraph'];
 const MESSAGE_CLASS = {};
@@ -96,8 +99,10 @@ const POPUP_STATE_TRACK = 'tracker';
 var popupPage = null;
 
 var showWarnings = false;
-chrome.storage.sync.get('show_warnings', function(e){
-    showWarnings = e['show_warnings'];
+var confirmRemoval = true;
+chrome.storage.sync.get(['show_warnings', 'confirm_removal'], function(e){
+    if (e['show_warnings'] !== undefined) { showWarnings = e['show_warnings']; }
+    if (e['confirm_removal'] !== undefined) { confirmRemoval = e['confirm_removal']; }
 });
 
 
@@ -272,6 +277,18 @@ function user_disconnect() {
 }
 
 
+// user delete job from trackers
+function remove_job(jobID) {
+    var confirmed = true;
+    if (confirmRemoval) {
+        confirmed = confirm('Are you sure you want to remove this job and lose the results? (You can turn off this confirmation in options.)');
+    }
+    if (confirmed) {
+        port.postMessage({action: 'remove_job', job:jobID});
+    }
+}
+
+
 // send a request to the background page to send to the server
 function make_request() {
     return new Promise(function(resolve, reject) {
@@ -338,6 +355,16 @@ function add_tracker(longID, shortID, title, warnings) {
         // add to a new paragraph
         var newTracker = document.createElement('p');
         newTracker.classList.add(...CLASS_REQPAR);
+        newTracker.setAttribute('id', 't_' + longID);
+        
+        // create the job deletion link
+        var deleteJob = document.createElement('bdi');
+        deleteJob.innerText = 'X ';
+        deleteJob.classList.add(...CLASS_DELJOB);
+        var deleteJobTooltip = document.createElement('div');
+        deleteJobTooltip.innerText = 'Cancel this job (if running) and delete the results.';
+        deleteJob.tooltip = new VGVTooltip(deleteJob, newTracker, deleteJobTooltip.innerHTML);
+        deleteJob.addEventListener('click', function(){ remove_job(longID); });
         
         // create the job status text
         var newJobStatus = document.createElement('bdi');
@@ -369,6 +396,7 @@ function add_tracker(longID, shortID, title, warnings) {
         trackerMessage.tooltip = new VGVIdentityTooltip(trackerMessage, newTracker);
         
         // add to the document
+        newTracker.appendChild(deleteJob);
         newTracker.appendChild(newJobStatus);
         newTracker.appendChild(trackerMessage);
         document.getElementById(HTML_MSGREQ).appendChild(newTracker);
@@ -404,6 +432,31 @@ function update_tracker(longID, message, messageType, warnings) {
             jobStatusTooltip.appendChild(warningList);
         }
         jobStatus.tooltip.set_html(jobStatusTooltip.innerHTML);
+    }
+}
+
+
+// remove the tracker from the trackers list
+function remove_tracker(longID) {
+    if (popupPage == POPUP_STATE_TRACK) {
+        var trackerMessage = document.getElementById('t_' + longID);
+        for (var child of trackerMessage.childNodes) {
+            if (child.hasOwnProperty('tooltip')) {
+                try { child.tooltip.remove(); }
+                catch (e) { console.log(e); }
+            }
+            child.remove();
+        }
+        trackerMessage.remove();
+    }
+}
+
+
+// update the short IDs of trackers
+function update_shorts(data) {
+    for (var longID of Object.keys(data)) {
+        var jobStatus = document.getElementById('j_' + longID);
+        jobStatus.innerText = 'Job ' + data[longID] + ' Status: ';
     }
 }
 
@@ -571,6 +624,14 @@ port.onMessage.addListener(function(msg) {
     
     else if (msg.type == 'result') {
         activate_result(msg.tracker, msg.message, msg.url, msg.title);
+    }
+    
+    else if (msg.type == 'remove_tracker') {
+        remove_tracker(msg.tracker);
+    }
+    
+    else if (msg.type == 'update_shorts') {
+        update_shorts(msg.data);
     }
     
     else { console.log(msg); }
