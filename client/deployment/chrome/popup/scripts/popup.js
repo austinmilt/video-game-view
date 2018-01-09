@@ -20,9 +20,19 @@
 // o function to stop tooltips
 // o menu to stop tooltips
 // o ability to delete trackers (and/or all trackers)
+// o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
+// o user disconnecting from server and then reconnecting doesnt work
+// o when user logs into youtube resets the client (info lost)
+// o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
+// o some clients being logged out (websocket closes) when popup closes(?) dunno why
+// o dont force user out of tracker menu when offline (especially when disconnected by server)
+// o store tracker state in chrome.storage.sync and reload on opening
+// X talent tooltip is not getting all its styling (has default border-radius and color)
+// X hovering over tracker status when tooltip killed leaves tooltip in page
+// X prevent popup from re-injecting content scripts that are already in.
 // X show warnings in tracker tooltips
 // X links to github, bug reporting, feature requests
-// o fullscreen tooltips (make tooltip box div a child of ytp-iv-video-content
+// X fullscreen tooltips (make tooltip box div a child of ytp-iv-video-content
 //      and give it a high zIndex (or z-index in css)
 // X max width job status text with tooltip of complete
 // X popup queries page to start with upon opening
@@ -32,19 +42,11 @@
 // X make job results text or hover be the video name
 // X make custom tooltips for popup and options page
 // X on server disconnect display a message to the user
-// o make your tooltips accept a template
+// X make your tooltips accept a template
 // X make a template for the job status tooltips with color coded warnings
 // X fix tooltip overflow in popup resizing window
-// o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
 // X hook up the frame interval on the server (already being sent by websocket client)
 // X websocket_client.js isnt correctly using the server reconnect attempts
-// o prevent popup from re-injecting content scripts that are already in.
-// o user disconnecting from server and then reconnecting doesnt work
-// o hovering over tracker status when tooltip killed leaves tooltip in page
-// o when user logs into youtube resets the client (info lost)
-// o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
-// o some clients being logged out (websocket closes) when popup closes(?) dunno why
-// o talent tooltip is not getting all its styling (has default border-radius and color)
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;
@@ -59,13 +61,13 @@ const TYPE_WARNING = "warning";
 const TYPE_ERROR = "error";
 const TYPE_RESULT = "result";
 const TYPE_RECEIVED = "received";
-const CLASS_JOB = "request request_default job_status_title has_vgvtt";
-const CLASS_REQPAR = "request_paragraph";
+const CLASS_JOB = ['request', 'request_default', 'job_status_title', 'has_vgvtt'];
+const CLASS_REQPAR = ['request_paragraph'];
 const MESSAGE_CLASS = {};
-MESSAGE_CLASS[TYPE_MSG] = "request request_default has_vgvtt";
-MESSAGE_CLASS[TYPE_WARNING] = "request request_warning has_vgvtt";
-MESSAGE_CLASS[TYPE_ERROR] = "request request_error has_vgvtt";
-MESSAGE_CLASS[TYPE_RESULT] = "request request_result";
+MESSAGE_CLASS[TYPE_MSG] = ['request', 'request_default', 'has_vgvtt'];
+MESSAGE_CLASS[TYPE_WARNING] = ['request', 'request_warning', 'has_vgvtt'];
+MESSAGE_CLASS[TYPE_ERROR] = ['request', 'request_error', 'has_vgvtt'];
+MESSAGE_CLASS[TYPE_RESULT] = ['request', 'request_result'];
 
 const HTML_START = 'start_button';
 const HTML_OPTIONS = 'options_button';
@@ -335,11 +337,11 @@ function add_tracker(longID, shortID, title, warnings) {
         
         // add to a new paragraph
         var newTracker = document.createElement('p');
-        newTracker.setAttribute('class', CLASS_REQPAR);
+        newTracker.classList.add(...CLASS_REQPAR);
         
         // create the job status text
         var newJobStatus = document.createElement('bdi');
-        newJobStatus.setAttribute('class', CLASS_JOB);
+        newJobStatus.classList.add(...CLASS_JOB);
         newJobStatus.innerText = 'Job ' + shortID + ' Status: ';
         newJobStatus.setAttribute('video_title', title);
         newJobStatus.setAttribute('id', 'j_' + longID);
@@ -362,7 +364,7 @@ function add_tracker(longID, shortID, title, warnings) {
         
         // create the server message text
         var trackerMessage = document.createElement('bdi');
-        trackerMessage.setAttribute('class', MESSAGE_CLASS[TYPE_MSG]);
+        trackerMessage.classList.add(...MESSAGE_CLASS[TYPE_MSG]);
         trackerMessage.setAttribute('id', longID);
         trackerMessage.tooltip = new VGVIdentityTooltip(trackerMessage, newTracker);
         
@@ -381,7 +383,7 @@ function update_tracker(longID, message, messageType, warnings) {
         // update server messages in the tracker message
         var trackerMessage = document.getElementById(longID);
         trackerMessage.innerText = message;
-        trackerMessage.setAttribute('class', MESSAGE_CLASS[messageType]);
+        trackerMessage.classList.add(...MESSAGE_CLASS[messageType]);
         trackerMessage.tooltip.refresh();
         
         // update the job status popup
@@ -490,7 +492,7 @@ function activate_result(longID, result, videoURL, videoTitle) {
         var tracker = document.getElementById(longID);
         tracker.tooltip.remove();
         tracker.innerText = 'Ready. View ' + videoTitle;
-        tracker.setAttribute('class', MESSAGE_CLASS[TYPE_RESULT]);
+        tracker.classList.add(...MESSAGE_CLASS[TYPE_RESULT]);
         tracker.addEventListener("click", function(e){
             chrome.tabs.update({url: videoURL}, function(tab) {
                 var listener = function(tabId, changeInfo, tab) {
