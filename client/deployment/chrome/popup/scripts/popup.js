@@ -17,7 +17,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// X server accept job cancelation requests and cancel running jobs
 // o function to stop tooltips
 // o menu to stop tooltips
 // o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
@@ -27,28 +26,6 @@
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
 // o store tracker state in chrome.storage.sync and reload on opening
 // o have some non-interpreted newlines (\n) in your tooltips
-// X ability to delete trackers (and/or all trackers)
-// X add option to skip confirmation of job deletion
-// X talent tooltip is not getting all its styling (has default border-radius and color)
-// X hovering over tracker status when tooltip killed leaves tooltip in page
-// X prevent popup from re-injecting content scripts that are already in.
-// X show warnings in tracker tooltips
-// X links to github, bug reporting, feature requests
-// X fullscreen tooltips (make tooltip box div a child of ytp-iv-video-content
-//      and give it a high zIndex (or z-index in css)
-// X max width job status text with tooltip of complete
-// X popup queries page to start with upon opening
-// X tracker menu item to return to menu without restarting everything
-// X program the options menu to work correctly and hook up the components
-// X tracker menu item to disconnect from server
-// X make job results text or hover be the video name
-// X make custom tooltips for popup and options page
-// X on server disconnect display a message to the user
-// X make your tooltips accept a template
-// X make a template for the job status tooltips with color coded warnings
-// X fix tooltip overflow in popup resizing window
-// X hook up the frame interval on the server (already being sent by websocket client)
-// X websocket_client.js isnt correctly using the server reconnect attempts
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;

@@ -3,7 +3,7 @@
 
     "name": "Video Game View",
     "description": "Videogame hud viewer",
-    "version": "1.0",
+    "version": "0.0.1",
 
     "browser_action": {
         "default_icon": "popup/assets/icon.png",
@@ -26,7 +26,6 @@
     "permissions": [
         "activeTab",
         "storage",
-        "wss://videogameview.com/websocket",
         "https://www.youtube.com/*",
         "https://www.youtu.be/*"
     ],
