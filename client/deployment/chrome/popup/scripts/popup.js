@@ -17,16 +17,16 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// o server accept job cancelation requests and cancel running jobs
+// X server accept job cancelation requests and cancel running jobs
 // o function to stop tooltips
 // o menu to stop tooltips
 // o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
 // o user disconnecting from server and then reconnecting doesnt work
-// o when user logs into youtube resets the client (info lost)
 // o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
 // o some clients being logged out (websocket closes) when popup closes(?) dunno why
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
 // o store tracker state in chrome.storage.sync and reload on opening
+// o have some non-interpreted newlines (\n) in your tooltips
 // X ability to delete trackers (and/or all trackers)
 // X add option to skip confirmation of job deletion
 // X talent tooltip is not getting all its styling (has default border-radius and color)

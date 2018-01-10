@@ -22,13 +22,13 @@ import tornado.websocket
 import tornado.escape
 from tornado.process import Subprocess
 from tornado.concurrent import Future
-# IMPORTS
 from tornado.queues import Queue
 from tornado.iostream import PipeIOStream
 import json, sys, os
 from uuid import uuid4
 from time import time
 from utilities.options import Options
+from subprocess import CalledProcessError
 
 
 # CONSTANTS
@@ -43,6 +43,7 @@ MSG_KWD_INTERVAL = 'interval'
 MSG_KWD_QUALITY = 'quality'
 MSG_TYPE_PING = 'ping'
 MSG_TYPE_REQUEST = 'request'
+MSG_TYPE_KILLJOB = 'kill_job'
 OUTGOING_KWD_TYPE = 'type'
 OUTGOING_KWD_REQUEST = 'request'
 OUTGOING_KWD_MSG = 'message'
@@ -52,6 +53,7 @@ OUTGOING_TYPE_ERR = 'error'
 OUTOING_TYPE_RES = 'result'
 OUTGOING_TYPE_PONG = 'pong'
 OUTGOING_TYPE_RECEIVED = 'received'
+OUTGOING_TYPE_KILLEDJOB = 'killed_job'
 OPTIONS = Options()
 sys.path = [OPTIONS.GL.ROOT] + sys.path
 from jobs.jobs import Job
@@ -79,6 +81,7 @@ def make_error(msg, rid=''): return make_message(msg, rid, OUTGOING_TYPE_ERR)
 def make_result(msg, rid=''): return make_message(msg, rid, OUTOING_TYPE_RES)
 def make_pong(msg, rid=''): return make_message('', '', OUTGOING_TYPE_PONG)
 def make_received(msg, rid=''): return make_message('', '', OUTGOING_TYPE_RECEIVED)
+def make_killedjob(msg, rid=''): return make_message('', '', OUTGOING_TYPE_KILLEDJOB)
 
 
 # main page handler
@@ -101,6 +104,7 @@ class JobSubprocess:
         self.process = None
         self.future = Future()
         self.result = None
+        self.killed = False
         
 
     # pipes subprocess printout to the message queue that is sent to client
@@ -110,7 +114,9 @@ class JobSubprocess:
             rid = self.processor.request[MSG_KWD_REQID]
             try: data = yield stream.read_until_regex(r'[\r\n]')
             except tornado.iostream.StreamClosedError: break
-            else: yield self.processor.websocket.messages.put(formatter('%s\r\n' % (data), rid))
+            else:
+                if not self.killed: # otherwise just dispose of the message
+                    yield self.processor.websocket.messages.put(formatter('%s\r\n' % (data), rid))
         
         
     # asynchronous spawn and wait for the job subprocess
@@ -124,15 +130,29 @@ class JobSubprocess:
             
         # ignore the return code of the job, but assume we failed if the
         # file that is supposed to have been produced is not there
-        returnCode = yield self.future
+        try: returnCode = yield self.future
+        except CalledProcessError as e:
+            if ((not self.killed) or (e.returncode <> -9)): raise e
+
         if not os.path.exists(self.expectedResults):
-            self.result = RuntimeError('Job failed.')
+            if self.killed: self.result = 'Job killed.'
+            else: self.result = 'Job failed.'
             
         # if the file is there, try to parse the file and then ditch it
         else:
             self.result = open(self.expectedResults, 'r').read()
             try: os.remove(self.expectedResults)
             except: print 'Couldnt remove temporary file %s' % self.expectedResults
+            
+            
+    # kill the suprocess running the video request
+    @tornado.gen.coroutine
+    def kill(self):
+        if (not self.killed) and (not self.future.done()):
+            self.killed = True
+            self.process.proc.kill()
+            
+        raise tornado.gen.Return(True)
 
 
 class WSInvalidRequest(Exception):
@@ -174,7 +194,7 @@ class WSVideoProcessorQueue:
             request = yield self.get()
             try: yield request.run()
             finally: self._items.task_done()
-        
+            
 
 # build the queue as a global variable here so it can
 # be accessed by instances of the video processor
@@ -186,17 +206,16 @@ QUEUE = WSVideoProcessorQueue()
 # adding to the queue, running the job, and returning results to the user
 class WSVideoProcessor:
 
-    def __init__(self, message, websocket):
+    def __init__(self, msgdict, websocket):
         self.request = None
         self.websocket = websocket
         self.id = uuid4()
         self.ran = False
         self.valid = False
-        self.write('Message received.', formatter=make_received)
         try:
         
             # parse and validate the message 
-            self.request = WSVideoProcessor.parse_message(message)            
+            self.request = WSVideoProcessor.parse_message(msgdict)            
             WSVideoProcessor.validate_request_dict(self.request)
                         
             # dont allow users to overload the system
@@ -218,7 +237,6 @@ class WSVideoProcessor:
             self.write('Added request to queue behind %i other requests (ID %s).' % (position, str(self.id)))
             
         except WSInvalidRequest as e: self.write(e.message, formatter=make_error)
-        except WSPing as e: self.write('', formatter=make_pong)
        
 
     # makes sure the user request meets minimum requirements for building
@@ -227,13 +245,7 @@ class WSVideoProcessor:
     def validate_request_dict(request):
         if not isinstance(request, dict):
             raise WSInvalidRequest(u'Invalid video processing request. Should be JSON dict string.')
-            
-        if MSG_KWD_TYPE not in request:
-            raise WSInvalidRequest(u'Invalid video processing request. Message type required.')
-            
-        if request[MSG_KWD_TYPE] == MSG_TYPE_PING:
-            raise WSPing()
-            
+
         if MSG_KWD_VIDEO not in request:
             raise WSInvalidRequest(u'Invalid video processing request. No video url found.')
             
@@ -244,25 +256,23 @@ class WSVideoProcessor:
     # parses the client's question into a dictionary to be used to build
     # and manage the video processing request
     @staticmethod
-    def parse_message(message):
-        try: messageDict = json.loads(message)
-        except ValueError: return {MSG_KWD_TYPE: None}
-        messageType = messageDict.get(MSG_KWD_TYPE, None)
-        if messageType == MSG_TYPE_PING: return {MSG_KWD_TYPE: MSG_TYPE_PING}
-        elif messageType == MSG_TYPE_REQUEST:
-            WSVideoProcessor.validate_request_dict(messageDict)
-            video = messageDict[MSG_KWD_VIDEO]
-            requestID = messageDict[MSG_KWD_REQID]
-            replays = messageDict.get(MSG_KWD_REPLAYS, [])
-            skip = messageDict.get(MSG_KWD_INTERVAL, None)
-            quality = messageDict.get(MSG_KWD_QUALITY, None)
+    def parse_message(msgdict):
+        messageType = msgdict.get(MSG_KWD_TYPE, None)
+        WSVideoProcessor.validate_request_dict(msgdict)
+        try:
+            video = msgdict[MSG_KWD_VIDEO]
+            requestID = msgdict[MSG_KWD_REQID]
+            replays = msgdict.get(MSG_KWD_REPLAYS, [])
+            skip = msgdict.get(MSG_KWD_INTERVAL, None)
+            quality = msgdict.get(MSG_KWD_QUALITY, None)
             return {
                 MSG_KWD_TYPE: MSG_TYPE_REQUEST, MSG_KWD_VIDEO: video, 
                 MSG_KWD_REPLAYS: replays, MSG_KWD_REQID: requestID,
                 MSG_KWD_INTERVAL: skip, MSG_KWD_QUALITY: quality
             }
-        
-        else: return {MSG_KWD_TYPE: None}
+            
+        except KeyError:
+            raise WSInvalidRequest(u'Invalid video processing request. One or more required keys is missing.')
       
 
     # adds messages to the message queue using the selected message formatter  
@@ -296,11 +306,14 @@ class WSVideoProcessor:
     
     # removes self from the socket and makes sure that if it comes up in the
     # queue it will not be run
+    @tornado.gen.coroutine
     def destroy(self):
         if self.valid:
-            self.websocket.requests.remove(self)
+            del self.websocket.requests[self.request[MSG_KWD_REQID]]
+            yield self.job.kill()
             
         self.valid = False
+        raise tornado.gen.Return(True)
         
         
       
@@ -311,7 +324,7 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
     # and message queue
     def open(self):
         self.id = uuid4()
-        self.requests = set()
+        self.requests = {}
         self.messages = Queue()
         tornado.ioloop.IOLoop.current().add_callback(self.consume_messages)
         print('WebSocket %s opened from IP %s' % (str(self.id), self.request.remote_ip))
@@ -320,15 +333,59 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
     # accept messages from the client and attempt to build a video processing
     # request/job
     def on_message(self, msg):
-        newRequest = WSVideoProcessor(msg, self)
-        if newRequest.valid: self.requests.add(newRequest)
-        else: newRequest.destroy()
+    
+        # figure out what kind of message has been sent and treat it 
+        # appropriately
+        msgDict = None
+        try: msgDict = json.loads(msg)
+        except ValueError:
+            self.messages.put(make_error('Messages must be JSON style.'))
+            return
+            
+        if not isinstance(msgDict, dict):
+            self.messages.put(make_error('Messages must be JSON style object.'))
+            return
+            
+        # pong a ping
+        msgType = msgDict.get(MSG_KWD_TYPE, None)
+        if msgType == MSG_TYPE_PING: self.messages.put(make_pong(''))
         
+        # build a video processing request
+        elif msgType == MSG_TYPE_REQUEST:
+            self.messages.put(make_received('Processing request recieved.', msgDict.get(MSG_KWD_REQID, '')))
+            requestID = msgDict.get(MSG_KWD_REQID, None)
+            if requestID is None:
+                self.messages.put(make_error('Request ID required for a new job.'))
+                return
+
+            newRequest = WSVideoProcessor(msgDict, self)      
+            if newRequest.valid: self.requests[requestID] = newRequest
+            else: newRequest.destroy()
+            
+        # kill a job
+        elif msgType == MSG_TYPE_KILLJOB:
+            self.messages.put(make_received('Kill request recieved.', msgDict.get(MSG_KWD_REQID, '')))
+            requestID = msgDict.get(MSG_KWD_REQID, None)
+            if requestID is None:
+                self.messages.put(make_error('Request ID required to kill job.'))
+
+            elif requestID not in self.requests:
+                self.messages.put(make_error('Request %s not found in requests.' % str(requestID), requestID))
+                
+            else:
+                print 'Killing job %s from socket %s.' % (self.requests[requestID].id, self.id)
+                self.requests[requestID].destroy()
+                self.messages.put(make_killedjob('Request %s killed' % str(requestID)))
+            
+        # unknown
+        else:
+            self.messages.put(make_error('Unrecognized message type. Doing nothing.', msgDict.get(MSG_KWD_REQID, '')))
+            
         
     # get rid of all existing requests this socket has made
     def on_close(self):
         print('WebSocket %s closed. Cleaning up.' % str(self.id))
-        toDestroy = list(self.requests)
+        toDestroy = list(self.requests.values())
         for request in toDestroy: request.destroy()
         del self.requests, toDestroy
         

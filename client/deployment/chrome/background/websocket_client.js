@@ -27,6 +27,7 @@ const TYPE_WARNING = "warning";
 const TYPE_ERROR = "error";
 const TYPE_RESULT = "result";
 const TYPE_RECEIVED = "received";
+const TYPE_KILLEDJOB = "killed_job";
 const hostURL = 'wss://www.videogameview.com/websocket';
 
 var connectAttempts = 0;
@@ -121,12 +122,22 @@ function WebSocketClient(host) {
                 requestID = message[MESSAGE_KWD_REQUEST];
                 var msg = null;
                 if (messageBody == '') { return; }
-                if (messageType == TYPE_RESULT) {
-                    state[requestID]['result'] = messageBody;
-                    msg = {
-                        type: 'result', tracker: requestID,
-                        message: messageBody, message_type: messageType,
-                        url: state[requestID]['url'], title: state[requestID]['title']
+                if ((messageType == TYPE_RESULT) && requestID) {
+                    if (state.hasOwnProperty(requestID)) {
+                        state[requestID]['result'] = messageBody;
+                        msg = {
+                            type: 'result', tracker: requestID,
+                            message: messageBody, message_type: messageType,
+                            url: state[requestID]['url'], title: state[requestID]['title']
+                        }
+                    }
+                    else {
+                        msg = {
+                            type: 'update_general', message: messageBody,
+                            message_type: TYPE_MSG
+                        }
+                        state['general']['message'] = messageBody;
+                        state['general']['message_type'] = messageType;
                     }
                 }
                 else if (state.hasOwnProperty(requestID)) {
@@ -141,13 +152,14 @@ function WebSocketClient(host) {
                     state[requestID]['message'] = messageBody;
                     state[requestID]['message_type'] = messageType;
                 }
-                else {
+                else if ((requestID === null) || (requestID === undefined)) {
                     msg = { type: 'update_general', message: messageBody,
                         message_type: messageType
                     };
                     state['general']['message'] = messageBody;
                     state['general']['message_type'] = messageType;
                 }
+                else { return; } // throw away message for requests that no longer exist
                 post_to_ports(msg);
                 
                 return message;
@@ -296,12 +308,13 @@ function set_popup_state(newState) { state['popup'] = newState; }
 function remove_job(jobID) {
     
     // tell the server to kill this job
-    // IMPLEMENT THIS
-    // request = {
-        // 'type': 'kill_job',
-        // 'request_id': jobID
-    // }
-    // CLIENT.socket.send(JSON.stringify(request));
+    if (CLIENT) {
+        request = {
+            'type': 'kill_job',
+            'request_id': jobID
+        }
+        CLIENT.socket.send(JSON.stringify(request));
+    }
     
     // should probably wait for answer from server before doing this, but...
     // tell popups to delete this tracker
