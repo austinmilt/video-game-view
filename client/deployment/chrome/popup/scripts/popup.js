@@ -227,7 +227,7 @@ function menu_options() {
 
 // navigate to github and/or bug/forum/requests
 function menu_forum() {
-    window.open('https://github.com/austinmilt/video-game-view', '_blank');
+    window.open('https://groups.google.com/forum/#!forum/video-game-view', '_blank');
 }
 
 

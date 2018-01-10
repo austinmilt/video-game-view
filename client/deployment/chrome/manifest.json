@@ -3,7 +3,7 @@
 
     "name": "Video Game View",
     "description": "Videogame hud viewer",
-    "version": "0.0.1",
+    "version": "0.0.3",
 
     "browser_action": {
         "default_icon": "popup/assets/icon.png",
