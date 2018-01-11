@@ -218,6 +218,9 @@ class Replay:
             result = subprocess.call(jarCall)
             return Replay.from_csv(jarCall[-1])
             
+        except Exception as e:
+            print 'Invalid replay file. Unable to parse replay.'
+            
         finally:
             if os.path.exists(jarCall[-1]):
                 try: os.remove(jarCall[-1])

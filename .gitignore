@@ -9,5 +9,4 @@ server/video_processing/lib
 server/*/out
 unused
 client/deployment/chrome.zip
-client/deployment/icon.png
-client/deployment/screenshot.png
+client/deployment/marketing

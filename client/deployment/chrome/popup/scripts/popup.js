@@ -17,6 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
+// o server log of activity
+// o server do a better job of clearing temp files
 // o function to stop tooltips
 // o menu to stop tooltips
 // o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
@@ -26,6 +28,7 @@
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
 // o store tracker state in chrome.storage.sync and reload on opening
 // o have some non-interpreted newlines (\n) in your tooltips
+// o prevent multiple injections of content scripts
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;

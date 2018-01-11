@@ -20,6 +20,7 @@ const GRU_TDEL = ':';
 const GRU_TITLECLASS = 'title ytd-video-primary-info-renderer';
 const VALID_DOMAINS = ['youtube.com', 'youtu.be'];
 const REQUIRE_REPLAYS = true;
+const RE_BLANK = new RegExp('\s');
 
 // custom error for problems with parsing the video details
 function InvalidTimeError(message) {
@@ -28,6 +29,15 @@ function InvalidTimeError(message) {
     this.stack = (new Error()).stack;
 }
 InvalidTimeError.prototype = new Error;
+
+
+// custom error for problems with parsing the replay urls
+function InvalidReplayURL(message) {
+    this.name = 'InvalidReplayURL';
+    this.message = message;
+    this.stack = (new Error()).stack;
+}
+InvalidReplayURL.prototype = new Error;
 
 
 // custom error for not being able to find the flag for replay data
@@ -93,20 +103,37 @@ function get_replay_start(time) {
     return parseFloat(hr)*3600 + parseFloat(min)*60 + parseFloat(sec);
 }
 
+
+// get url of replay
+function get_replay_url(node) {
+    if (typeof node.hasAttribute == 'function') {
+        if (node.hasAttribute('href')) {
+            try { return (new URL(unescape(node.href))).searchParams.get('q'); }
+            catch (e) { throw new InvalidReplayURL('Invalid replay url.'); }
+        }
+    }
+    throw new InvalidReplayURL('Invalid replay url.');  
+}
+
+
 // function to parse replay links from video description
 function get_replay_urls() {
-    var description = document.getElementById(GRU_DESCRIPTION).innerText.split('\n');
+    var elDescription = document.getElementById(GRU_DESCRIPTION);
     var line;
     var flag = false;
     var urls = [];
     var time;
     var url;
     var sline;
-    for (var i = 0; i < description.length; i++) {
-        line = description[i].trim();
+    var nextData = 'time';
+    for (var child of elDescription.childNodes) {
+        var text = child.textContent.trim();
+        
+        // skip empty lines
+        if (!text) { continue; }
         
         // if the current line is the start/end of the relevant section
-        if (line.toLowerCase().startsWith(GRU_FLAG)) {
+        if (text.toLowerCase().startsWith(GRU_FLAG)) {
         
             // found the end, so finish
             if (flag) {
@@ -122,10 +149,15 @@ function get_replay_urls() {
         // parse line for relevant info
         else if (flag) {
             try {
-                sline = line.split(' ');
-                startTime = get_replay_start(sline[0]);
-                url = sline[1];
-                urls.push([startTime, url]);
+                if (nextData == 'time') {
+                    startTime = get_replay_start(text);
+                    nextData = 'replay_url';
+                }
+                else if (nextData == 'replay_url') {
+                    url = get_replay_url(child);
+                    urls.push([startTime, url]);
+                    nextData = 'time';
+                }
             }
             catch (e) {
                 throw new InvalidDescriptionError('Invalid info in video description.');

@@ -132,7 +132,9 @@ class JobSubprocess:
         # file that is supposed to have been produced is not there
         try: returnCode = yield self.future
         except CalledProcessError as e:
-            if ((not self.killed) or (e.returncode <> -9)): raise e
+            if ((not self.killed) or (e.returncode <> -9)): 
+                print self.call
+                raise e
 
         if not os.path.exists(self.expectedResults):
             if self.killed: self.result = 'Job killed.'
