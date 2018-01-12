@@ -198,7 +198,7 @@ class Replay:
         
         
     @staticmethod
-    def from_dem(file):
+    def from_dem(file, verbose=False):
         """
         Creates a new Replay from a dota 2 dem using the replay processor.
         
@@ -215,7 +215,12 @@ class Replay:
         if not os.path.exists(OPTIONS.JB.SCRATCH): os.makedirs(OPTIONS.JB.SCRATCH)
         jarCall[-1] = os.path.abspath(os.path.join(OPTIONS.JB.SCRATCH, str(uuid4())))
         try:
-            result = subprocess.call(jarCall)
+            p = subprocess.Popen(jarCall, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = p.communicate()
+            if (verbose):
+                print out
+                print err
+                
             return Replay.from_csv(jarCall[-1])
             
         except Exception as e:

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import org.apache.log4j.BasicConfigurator;
 import skadistats.clarity.model.Entity;
 import skadistats.clarity.model.FieldPath;
 import skadistats.clarity.model.StringTable;
@@ -241,7 +242,7 @@ public class ReplayParser {
         Float gameTime = getRealGameTimeSeconds(entities);
         
         // get hero abilities and items (if hero has been set yet)
-        if (hero != null) {
+        if ((hero != null) && (gameTime != null)) {
         
             // get the hero name and see if this is another update in the same 
             //  time. If so, skip it
@@ -250,13 +251,12 @@ public class ReplayParser {
                 lastTime = gameTime;
                 if (heroID == lastHero) {
                     return;
-                }
-                else {
+                } else {
                     lastHero = heroID;
                 }
             }
             lastTime = gameTime;
-            
+
             // get hero abilities
             entityHandles.put(heroID, new HashMap<String, ArrayList<Integer>>());
             entityHandles.get(heroID).put("abilities", new ArrayList<Integer>());
@@ -454,6 +454,11 @@ public class ReplayParser {
             // heroesNames[i] = player.getHeroName();
         // }
         // ********************************************************************
+        BasicConfigurator.configure();
+
+        if (args.length == 0) {
+            args = new String[]{"D:\\Dropbox\\video-game-view\\client\\deployment\\marketing\\video_examples\\example_2\\0-00.dem", "D:\\Dropbox\\video-game-view\\client\\deployment\\marketing\\video_examples\\example_2\\results.csv"};
+        }
         
         // create the match analyzer (runner), which will search for item and
         //  ability changes as the match progresses
