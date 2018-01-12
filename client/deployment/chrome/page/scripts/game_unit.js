@@ -32,6 +32,7 @@ var DPE_KWD_ABL_MOD = 'scepter_mods';
 var DPE_KWD_ABL_CST = 'cost';
 var DPE_KWD_ABL_COO = 'cooldown';
 var DPE_KWD_ABL_MAN = 'mana';
+var DPE_KWD_ABL_ICO = 'icon';
 
 
 
@@ -170,8 +171,15 @@ class NoteDescriptor extends BaseDescriptor {
 
 class NameDescriptor extends BaseDescriptor {
     
+    constructor(name='', icon='') {
+        super();
+        this.name = name;
+        this.icon = icon;
+    }
+    
     html() {
-        return '{0}'.format(this.text);
+        if (this.icon != '') { return '<img src="{0}" style="height:5rem;width:auto;float:left;padding-right:0.5rem;">  {1}'.format(this.icon, this.name); }
+        else { return '{0}'.format(this.name) ; }
     }
 }
 
@@ -350,7 +358,7 @@ class GameUnitAbility {
     */
     static from_dotapedia(id) {
         var obj = DOTAPEDIA[id];
-        var name = new NameDescriptor(obj[DPE_KWD_ABL_NAM]);
+        var name = new NameDescriptor(obj[DPE_KWD_ABL_NAM], obj[DPE_KWD_ABL_ICO]);
         var description = new BaseDescriptor(obj[DPE_KWD_ABL_DSC]);
         var notes = new NoteDescriptor(obj[DPE_KWD_ABL_NOT]);
         var details = new DetailsDescriptor();

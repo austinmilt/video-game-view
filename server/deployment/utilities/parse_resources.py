@@ -100,9 +100,22 @@ DEF_RESOURCE_FILES = {
 DEF_ENCODING = 'utf-16'
 
 VPK_EXE = os.path.abspath(os.path.join(HERE, 'vpk', 'vpk.exe'))
+VPK_CALL_LISTFILES = [VPK_EXE, 'l']
 VPK_CALL = [VPK_EXE, 'x']
 VPK_DEF_VPK = os.path.abspath(os.path.join(DEF_DOTA, r'pak01_dir.vpk'))
 VPK_DEF_FIL = ['scripts/npc/items.txt']
+VPK_DEF_IMAGES = {
+    'heroes': [r'resource/flash3/images/heroes'], 
+    'items': [r'resource/flash3/images/items'], 
+    'abilities': [r'resource/flash3/images/spellicons']
+}
+
+IMG_DEF_HOST = r'https://storage.googleapis.com/vgv-assets'
+IMG_DEF_SUBDIR = {
+    'heroes': r'images/heroes',
+    'items': r'images/items',
+    'abilities': r'images/spellicons'
+}
 
 MAN_KEY_ABL = r'Ability\d'
 MAN_KEY_ASP = 'AbilitySpecial'
@@ -624,6 +637,8 @@ class Tooltip:
                     details (list): list of (descriptor, value) tuples 
                         describing custom details of the npc
                         
+                    icon (str): url of icon image to use in tooltip
+                        
                     lore (str): lore for the NPC
                     
                     mana (str): mana cost
@@ -640,7 +655,7 @@ class Tooltip:
         P = {
             'name': '', 'description': '', 'details': [], 'cooldown': '',
             'mana': '', 'notes': [], 'lore': '', 'scepter': '', 
-            'scepter_mods': [], 'cost': ''
+            'scepter_mods': [], 'cost': '', 'icon': ''
         }
         P.update(kwargs)
         self._keys = P.keys()
@@ -691,9 +706,12 @@ class Tooltip:
         if nameKey is None: return Tooltip() # for npc's with no tooltip info
         name = npc.tooltipData[nameKey]
         ttDict = {  
-            'name': name, 'notes': [], 
-            'details': [], 'scepter_mods': []
+            'name': name, 'notes': [],  'details': [], 'scepter_mods': [],
+            'icon': ''
         }
+        
+        # image icon
+        if npc.icon is not None: ttDict['icon'] = npc.icon
         
         # mana and cooldown (get special formatting in tooltips)
         if npc.has_key(MAN_KEY_MAN): ttDict['mana'] = npc.get(MAN_KEY_MAN)
@@ -764,6 +782,89 @@ class Tooltip:
         return self.to_pystr().replace('u"', '"').replace("u'", "'")
         
         
+        
+class ImageMap:
+    KEY = None
+    REMDIR = ''
+    LOCDIR = ''
+
+    def __init__(self, imageMap):
+        """
+        Container for organized npc images.
+        
+        Args:
+            imageMap (dict): mapping from npc short name to image hosting path
+                (local file or url)
+        """
+        self.map = imageMap
+        
+        
+    def get(self, key): return self.map[key]
+    def keys(self): return self.map.keys()
+    def values(self): return self.map.values()
+    
+    
+    @staticmethod
+    def file_to_key(localFile):
+        return os.path.splitext(os.path.basename(localFile))[0]
+        
+        
+    @classmethod
+    def local_to_url(cls, local, host=IMG_DEF_HOST, subdir=None, locdir=None):
+    
+        # update defaults
+        if subdir is None: subdir = cls.REMDIR
+        if locdir is None: locdir = cls.LOCDIR
+        
+        # skip the parts of the local file path that are not part of the
+        # remote path and build the remote path from the rest
+        local = os.path.relpath(local)
+        locdir = os.path.relpath(locdir)
+        fileSplit = local.split(os.path.sep)
+        dirSplit = locdir.split(os.path.sep)
+        dn = len(dirSplit)
+        fn = len(fileSplit)
+        urlParts = host.split('/')
+        urlParts.extend(subdir.split('/'))
+        i = 0
+        while ((i < dn) and (i < fn) and (fileSplit[i] == dirSplit[i])): i += 1
+        if (i == fn): raise ValueError('Cannot build url for this file with the given parameters.')
+        urlParts.extend(fileSplit[i:])
+        
+        # build the url and remove any duplicate slashes
+        url = '/'.join(urlParts)
+        url = url[::-1].replace('//','/',url.count('//')-1)[::-1]
+        return url
+        
+        
+    @classmethod
+    def from_local(cls, files, l2u=None, f2k=None):
+        if l2u is None: l2u = cls.local_to_url
+        if f2k is None: f2k = cls.file_to_key
+        return cls(dict((f2k(f), l2u(f)) for f in files))
+        
+
+        
+class HeroImageMap(ImageMap):
+    KEY = 'heroes'
+    REMDIR = IMG_DEF_SUBDIR[KEY]
+    LOCDIR = VPK_DEF_IMAGES[KEY][0]
+    
+    
+    
+class ItemImageMap(ImageMap):
+    KEY = 'items'
+    REMDIR = IMG_DEF_SUBDIR[KEY]
+    LOCDIR = VPK_DEF_IMAGES[KEY][0]
+
+    
+    
+class AbilityImageMap(ImageMap):
+    KEY = 'abilities'
+    REMDIR = IMG_DEF_SUBDIR[KEY]
+    LOCDIR = VPK_DEF_IMAGES[KEY][0]
+
+
 
 # #############################################################################
 # FUNCTIONS ###################################################################
@@ -796,7 +897,7 @@ def download_resources(urls=None, destination='.'):
         paths.append(dest)
         
     return paths
-        
+    
 
 def vpk_extract(vpk=VPK_DEF_VPK, files=VPK_DEF_FIL):
     """
@@ -807,30 +908,48 @@ def vpk_extract(vpk=VPK_DEF_VPK, files=VPK_DEF_FIL):
             VPK_DEF_VPK
         
         files (list): (optional) list of file paths to extract, where the path
-            is relative to the root of the vpk. Default is VPK_DEF_FIL
+            is relative to the root of the vpk. If a file path is determined
+            to be a directory, the whole directory and its sub-directories will
+            be extracted. Default is VPK_DEF_FIL
             
     Returns:
         list: paths to extracted files, which will have the same directory
             structure as the vpk
     """
     # imports
-    import subprocess
+    import subprocess, os
     
+    # get a listing of files in the vpk
+    call = VPK_CALL_LISTFILES + [r'%s' % vpk]
+    p = subprocess.Popen(call, stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    vpkFiles = [s.strip() for s in out.strip().split()]
+    
+    # match requested files to those given in the vpk
+    files = [os.path.relpath(f) for f in files]
+    toExtract = []
+    for vpkFile in vpkFiles:
+        vpkRel = os.path.relpath(vpkFile)
+        for requestedFile in files:
+            if vpkRel.startswith(requestedFile):
+                toExtract.append(vpkFile)
+                
     # make temporary directories for vpk.exe to extract to
-    for f in files:
+    for f in toExtract:
         if not os.path.exists(os.path.dirname(f)):
             os.makedirs(os.path.dirname(f))
     
     # extract files
-    call = VPK_CALL + [r'%s' % vpk] + [r'%s' % f for f in files]
-    subprocess.call(call)
+    for f in toExtract:
+        call = VPK_CALL + [r'%s' % vpk] + [r'%s' % f]
+        subprocess.call(call)
     
     # check that all the files now exist
-    for f in files:
+    for f in toExtract:
         if not os.path.exists(f):
             raise ValueError('File not successfully extracted: %s' % f)
             
-    return files
+    return toExtract
     
     
 def write_server_data(heroes, abilities, items, units, outfile):
@@ -912,6 +1031,18 @@ def main():
         if key == 'items':
             try: return vpk_extract(files=VPK_DEF_FIL)[0]
             except: return download_resources(urls=[DEF_RESOURCE_FILES[key]['url']])[0]
+                
+        elif key == 'images_heroes':
+            try: return vpk_extract(files=VPK_DEF_IMAGES['heroes'])
+            except: print 'Unable to extract hero resource images.'
+            
+        elif key == 'images_items':
+            try: return vpk_extract(files=VPK_DEF_IMAGES['items'])
+            except: print 'Unable to extract item resource images.'
+            
+        elif key == 'images_abilities':
+            try: return vpk_extract(files=VPK_DEF_IMAGES['abilities'])
+            except: print 'Unable to extract ability resource images.'
             
         else:
             if os.path.exists(DEF_RESOURCE_FILES[key]['local']): return DEF_RESOURCE_FILES[key]['local']
@@ -921,6 +1052,7 @@ def main():
     def get_tooltips(tooltips, npcKey, otherKeys):
         regex = re.compile(MAN_RGX % (KWD_TITLESEP, npcKey, KWD_TITLESEP, KWD_TITLESEP, npcKey))
         tooltipKeys = []
+        
         # match tooltip keys that have this ability key in them, but 
         #   omit those longer tooltip keys that have this ability key
         #   as a substring (reversed case should already be handled 
@@ -956,6 +1088,11 @@ def main():
     abilityTooltips = dict((k, tokens.get(k)) for k in tokens.search_all_keys(RGX_DES_ABILITY))
     itemTooltips = dict((k, tokens.get(k)) for k in tokens.search_all_keys(RGX_DES_ITEM))
     
+    # extract image assets
+    imagesHeroes = HeroImageMap.from_local(get_file('images_heroes'))
+    imagesItems = ItemImageMap.from_local(get_file('images_items'))
+    imagesAbilities = AbilityImageMap.from_local(get_file('images_abilities'))
+    
     # get ability tooltips
     for ability in abilities:
         ability.tooltipData = get_tooltips(abilityTooltips, ability.get_key(), [])
@@ -980,8 +1117,14 @@ def main():
             localNameKey = [k for k in ability.tooltipData if len(k) == minLen][0]
             ability.set_name(ability.tooltipData[localNameKey])
             
+        # store the icon
+        try: ability.icon = imagesAbilities.get(ability.get_key())
+        except: ability.icon = None
+            
         # create a tooltip for the ability
         ability.tooltip = Tooltip.from_npc(ability, variables)
+        
+
             
     # merge hero and ability data
     for hero in heroes:
@@ -992,6 +1135,10 @@ def main():
         hero.abilities = {}
         for k in abilityKeys:
             if abilities.has_key(k): hero.abilities[k] = abilities.get_by_key(k)
+            
+        # store the icon
+        try: hero.icon = imagesHeroes.get(hero.get_key())
+        except: hero.icon = None
         
         # grab tooltip info for abilities
         for abilityKey in hero.abilities:
@@ -1019,6 +1166,10 @@ def main():
                 minLen = min([len(k) for k in ability.tooltipData])
                 localNameKey = [k for k in ability.tooltipData if len(k) == minLen][0]
                 ability.set_name(ability.tooltipData[localNameKey])
+                
+            # store the icon
+            try: ability.icon = imagesAbilities.get(ability.get_key())
+            except: ability.icon = None
                 
             # create a tooltip for the ability
             ability.tooltip = Tooltip.from_npc(ability, variables)
@@ -1052,6 +1203,10 @@ def main():
                     # replace the standard %var% style placeholders
                     tooltip = tooltip.replace(MAN_KWD_VAR.format(k=attributeKey), abilitySpecial[attributeKey])
                     item.tooltipData[tooltipDataKey] = tooltip
+        
+        # store the icon
+        try: item.icon = imagesItems.get(item.get_short())
+        except: item.icon = None
                     
         # create a tooltip for the item
         item.tooltip = Tooltip.from_npc(item, variables)
@@ -1066,6 +1221,10 @@ def main():
         unit.abilities = {}
         for k in abilityKeys:
             if abilities.has_key(k): unit.abilities[k] = abilities.get_by_key(k)
+            
+        # store the icon
+        try: unit.icon = imagesHeroes.get(unit.get_key())
+        except: unit.icon = None
         
         # grab tooltip info for abilities
         for abilityKey in unit.abilities:
@@ -1087,7 +1246,11 @@ def main():
                         # replace the standard %var% style placeholders
                         tooltip = tooltip.replace(MAN_KWD_VAR.format(k=attributeKey), abilitySpecial[attributeKey])
                         ability.tooltipData[tooltipDataKey] = tooltip
-                        
+            
+            # store the icon
+            try: ability.icon = imagesAbilities.get(ability.get_key())
+            except: ability.icon = None
+        
             # create a tooltip for the ability
             ability.tooltip = Tooltip.from_npc(ability, variables)
                         
