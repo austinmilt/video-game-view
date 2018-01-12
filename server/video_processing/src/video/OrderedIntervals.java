@@ -146,6 +146,7 @@ public class OrderedIntervals {
                 break;
             }
             else if (time < cur.get_start()) { break; }
+            else { cur = cur.get_next(); }
         }
         return result;
     }

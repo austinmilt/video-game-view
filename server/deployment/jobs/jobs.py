@@ -64,15 +64,15 @@ class Time:
         if not issec:
             self.seconds = self.clock_to_seconds(value)
             
-        
+            
     @staticmethod
     def _split_clock_(clock):
         """
         Splits the clock string into minutes and seconds, including indicating
         negative time.
         """
-        
-        # determin if it's a negative time
+
+        # determine if it's a negative time
         clock = clock.strip()
         if clock.startswith(Time.KWD_NEG): negative = True
         else: negative = False
@@ -328,7 +328,10 @@ class JobResults:
         
             # get the game time in seconds at this video time
             clockLabel = self.job.video.query(OPTIONS.CD.KEY, vidTime)
-            gameTimeSeconds = Time.clock_to_seconds(clockLabel)
+            try: gameTimeSeconds = Time.clock_to_seconds(clockLabel)
+            except ValueError as e: 
+                vidTime += self.job.skip
+                continue # if the detector didnt find a valid time, skip
             
             # pull every hero's state at this time
             focusHeroName = self.job.video.query(OPTIONS.ND.KEY, vidTime)

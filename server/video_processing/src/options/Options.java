@@ -30,7 +30,7 @@ public class Options {
     // constants
     private static final String DEFAULT_OPTIONS_NAME = "settings.config";
     private static final String DEFAULT_OPTIONS = Options.locate_options_file();
-//    private static final String DEFAULT_OPTIONS = "D:\\Dropbox\\youtube_game_hud\\server\\deployment\\settings.config";
+//    private static final String DEFAULT_OPTIONS = "D:\\Dropbox\\video-game-view\\server\\deployment\\settings.config";
     private static final File JAR = Options.locate_jar();
     private static final String COMMENT = "#";
     private static final String VALUE_DEFINITION = "=";

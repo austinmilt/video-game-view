@@ -29,6 +29,7 @@
 // o store tracker state in chrome.storage.sync and reload on opening
 // o have some non-interpreted newlines (\n) in your tooltips
 // o prevent multiple injections of content scripts
+// o morphling tooltips are off positioned. True for all 6-slotted heroes?
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;

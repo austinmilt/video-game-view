@@ -6,8 +6,6 @@
     <JAVADOC />
     <NATIVE>
       <root url="file://$PROJECT_DIR$/lib/opencv" />
-      <root url="file://$PROJECT_DIR$/lib/opencv" />
-      <root url="file://$PROJECT_DIR$/lib/opencv" />
     </NATIVE>
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/opencv/opencv-331.jar!/" />

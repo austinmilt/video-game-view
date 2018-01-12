@@ -37,8 +37,12 @@ ARG_QUALITY = 'quality'
 # #############################################################################
 
 def parse_replay_pairs(arg, reverse=False):
-    """Pass in string for forward, list [time, replay, time, replay...] for reverse."""
-    if reverse: return' '.join([str(s) for s in arg])
+    """Pass in string for forward, list [[time, replay], [time, replay]...] for reverse."""
+    if reverse:
+        flat = []
+        for pair in arg: flat.extend(pair)
+        return ' '.join([str(s) for s in flat])
+
     else:
         splitted = arg.strip().split()
         nsplit = len(splitted)
@@ -94,15 +98,13 @@ def parse_args(args):
 
 def build_job_call(video, replays, skip=None, outfile=None, quality=None):
     """Builds a call that cal be invoked with Subprocess.call and will call the main() function here."""
-    outfile = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+    if outfile is None: outfile = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
     toCall = list(JOB_CALLBASE)
     toCall.append(parse_arg(ARG_VIDEO, video, True))
     toCall.append(parse_arg(ARG_OUTFILE, outfile, True))
     if skip is not None: toCall.append(parse_arg(ARG_SKIP, skip, True))
     if quality is not None: toCall.append(parse_arg(ARG_QUALITY, quality, True))
-    replaysFlat = []
-    for r in replays: replaysFlat.extend(r)
-    toCall.append(parse_arg(ARG_REPLAYS, replaysFlat, True))
+    toCall.append(parse_arg(ARG_REPLAYS, replays, True))
     return toCall, outfile
 
 
