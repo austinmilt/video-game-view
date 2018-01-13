@@ -14,6 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+# start logging
+import logging, os, shutil
+import tornado.log
+LOGDIR = '/home/austin_w_milt/deployment/logs'
+LOGNAME = 'server.log'
+LOGFILE = os.path.join(LOGDIR, LOGNAME)
+if os.path.exists(LOGDIR):
+    try: shutil.rmtree(LOGDIR)
+    except: pass
+    
+if not os.path.exists(LOGDIR): os.makedirs(LOGDIR)
+tornado.log.enable_pretty_logging()
+logHandler = logging.handlers.TimedRotatingFileHandler(LOGFILE, when='D', interval=1, backupCount=30, utc=True)
+log = logging.getLogger('main')
+log.setLevel(logging.INFO)
+log.addHandler(logHandler)
+# accessLog = logging.getLogger("tornado.access")
+# accessLog.addHandler(logHandler)
+appLog = logging.getLogger("tornado.application")
+appLog.addHandler(logHandler)
+genLog = logging.getLogger("tornado.general")
+genLog.addHandler(logHandler)
+
+
 # imports
 import tornado.ioloop
 import tornado.gen
@@ -133,7 +157,7 @@ class JobSubprocess:
         try: returnCode = yield self.future
         except CalledProcessError as e:
             if ((not self.killed) or (e.returncode <> -9)): 
-                print self.call
+                log.error(self.call)
                 raise e
 
         if not os.path.exists(self.expectedResults):
@@ -144,7 +168,7 @@ class JobSubprocess:
         else:
             self.result = open(self.expectedResults, 'r').read()
             try: os.remove(self.expectedResults)
-            except: print 'Couldnt remove temporary file %s' % self.expectedResults
+            except: log.warn('Couldnt remove temporary file %s' % self.expectedResults)
             
             
     # kill the suprocess running the video request
@@ -177,7 +201,7 @@ class WSVideoProcessorQueue:
     # add job requests to the queue
     @tornado.gen.coroutine
     def put(self, item):
-        print 'Socket %s added request %s to queue.' % (str(item.websocket.id), str(item.id))
+        log.info('Socket %s added request %s to queue.' % (str(item.websocket.id), str(item.id)))
         cursize = self._items.qsize()
         yield self._items.put(item)
         raise tornado.gen.Return(cursize)
@@ -294,11 +318,11 @@ class WSVideoProcessor:
             
         elif self.valid:
             self.ran = True
-            print 'Running job %s from socket %s' % (str(self.id), str(self.websocket.id))
+            log.info('Running job %s from socket %s' % (str(self.id), str(self.websocket.id)))
             yield self.write('Running job %s.' % str(self.id))
             yield self.job.wait()
             yield self.write(self.job.result, make_result)
-            print 'Job %s on socket %s complete.' % (str(self.id), str(self.websocket.id))
+            log.info('Job %s on socket %s complete.' % (str(self.id), str(self.websocket.id)))
             
         else:
             yield self.write('Trying to run invalid job.', make_error)
@@ -329,7 +353,7 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
         self.requests = {}
         self.messages = Queue()
         tornado.ioloop.IOLoop.current().add_callback(self.consume_messages)
-        print('WebSocket %s opened from IP %s' % (str(self.id), self.request.remote_ip))
+        log.info('WebSocket %s opened from IP %s' % (str(self.id), self.request.remote_ip))
 
         
     # accept messages from the client and attempt to build a video processing
@@ -375,7 +399,7 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
                 self.messages.put(make_error('Request %s not found in requests.' % str(requestID), requestID))
                 
             else:
-                print 'Killing job %s from socket %s.' % (self.requests[requestID].id, self.id)
+                log.info('Killing job %s from socket %s.' % (self.requests[requestID].id, self.id))
                 self.requests[requestID].destroy()
                 self.messages.put(make_killedjob('Request %s killed' % str(requestID)))
             
@@ -386,7 +410,7 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
         
     # get rid of all existing requests this socket has made
     def on_close(self):
-        print('WebSocket %s closed. Cleaning up.' % str(self.id))
+        log.info('WebSocket %s closed. Cleaning up.' % str(self.id))
         toDestroy = list(self.requests.values())
         for request in toDestroy: request.destroy()
         del self.requests, toDestroy
@@ -412,7 +436,7 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
 if __name__ == "__main__":
 
     # create the web server
-    print 'Starting web application'
+    log.info('Starting web application')
     application = tornado.web.Application([
         (r'/', MainHandler),
         (r'/websocket', RequestWebSocket)
@@ -427,13 +451,13 @@ if __name__ == "__main__":
             }
             
         application.listen(port, ssl_options=sslOptions)
-        print 'Listening on port %i' % port
+        log.info('Listening on port %i' % port)
     
     # start workers to consume the requests for video processing
     for i in range(OPTIONS.SV.WORKERS):
         tornado.ioloop.IOLoop.current().add_callback(QUEUE.consume)
-        print 'Started worker %i' % i
+        log.info('Started worker %i' % i)
         
     # start the server
-    print 'Starting server'
+    log.info('Starting server')
     tornado.ioloop.IOLoop.current().start()
