@@ -28,6 +28,7 @@ const TYPE_ERROR = "error";
 const TYPE_RESULT = "result";
 const TYPE_RECEIVED = "received";
 const TYPE_KILLEDJOB = "killed_job";
+const TYPE_SETSESSION = "set_session_id";
 const hostURL = 'wss://www.videogameview.com/websocket';
 
 var connectAttempts = 0;
@@ -44,7 +45,8 @@ chrome.storage.sync.get(['connect_attempts', 'frame_interval'], function(e) {
 // tracking tabs and request results
 var state = {
     'general': { 'message': '', 'message_type': TYPE_MSG },
-    'id_order': [], 'connected': false, 'popup': 'menu'
+    'id_order': [], 'connected': false, 'popup': 'menu',
+    'session_id': null
 };
 var ports = new Set();
 
@@ -110,6 +112,25 @@ function WebSocketClient(host) {
             
             // indicate that connection is open and start ping/pong
             self.socket.onopen = function() {
+                
+                // tell server this session ID to try to recover running jobs
+                // or get a new session ID so this can be done later
+                if (state['session_id']) {
+                    console.log('trying to update session on server');
+                    msg = {
+                        'type': 'tell_session_id', 
+                        'session_id': state['session_id']
+                    };
+                    self.socket.send(JSON.stringify(msg));
+                }
+                else {
+                    console.log('getting a new session');
+                    msg = {'type': 'get_new_session_id'};
+                    self.socket.send(JSON.stringify(msg));
+                }
+                
+                
+                // do other stufff
                 state['connected'] = true;
                 post_to_ports({'type': 'socket_opened'});
                 console.log('Connection opened.');
@@ -134,6 +155,14 @@ function WebSocketClient(host) {
                 // if it's just confirmation the message was received,
                 // do nothing
                 else if (messageType == TYPE_RECEIVED) { return; }
+                
+                // if it's a message to set the session ID, do that
+                else if (messageType == TYPE_SETSESSION) {
+                    console.log('setting session ID to ' + message[MESSAGE_KWD_MSG]);
+                    console.log(message);
+                    state['session_id'] = message[MESSAGE_KWD_MSG];
+                    return;
+                }
                 
                 // otherwise it's a message to display to user, so find
                 // the request that needs info displayed for and post

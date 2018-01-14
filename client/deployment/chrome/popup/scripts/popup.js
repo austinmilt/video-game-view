@@ -18,6 +18,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
 // X server log of activity
+// X auto-reconnect websocket without canceling job on server
+// o client clicking on link throws problem with the hero_timer
+// o options menu tooltips appear in the wrong place
+// o put screen indicator in bottom-right of popup screen showing when the client is trying to connect
 // o menu item to start in offline mode
 // o server do a better job of clearing temp files
 // o function to stop tooltips

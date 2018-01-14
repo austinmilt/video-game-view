@@ -30,7 +30,8 @@ logHandler = logging.handlers.TimedRotatingFileHandler(LOGFILE, when='D', interv
 log = logging.getLogger('main')
 log.setLevel(logging.INFO)
 log.addHandler(logHandler)
-# accessLog = logging.getLogger("tornado.access")
+accessLog = logging.getLogger("tornado.access")
+accessLog.propagate = False
 # accessLog.addHandler(logHandler)
 appLog = logging.getLogger("tornado.application")
 appLog.addHandler(logHandler)
@@ -53,6 +54,7 @@ from uuid import uuid4
 from time import time
 from utilities.options import Options
 from subprocess import CalledProcessError
+from datetime import timedelta
 
 
 # CONSTANTS
@@ -65,9 +67,12 @@ MSG_KWD_REPLAYS = 'replays'
 MSG_KWD_REQID = 'request_id'
 MSG_KWD_INTERVAL = 'interval'
 MSG_KWD_QUALITY = 'quality'
+MSG_KWD_SESSIONID = 'session_id'
 MSG_TYPE_PING = 'ping'
 MSG_TYPE_REQUEST = 'request'
 MSG_TYPE_KILLJOB = 'kill_job'
+MSG_TYPE_SETSESSION = 'tell_session_id'
+MSG_TYPE_NEWSESSION = 'get_new_session_id'
 OUTGOING_KWD_TYPE = 'type'
 OUTGOING_KWD_REQUEST = 'request'
 OUTGOING_KWD_MSG = 'message'
@@ -78,6 +83,7 @@ OUTOING_TYPE_RES = 'result'
 OUTGOING_TYPE_PONG = 'pong'
 OUTGOING_TYPE_RECEIVED = 'received'
 OUTGOING_TYPE_KILLEDJOB = 'killed_job'
+OUTGOING_TYPE_SETSESSION = 'set_session_id'
 OPTIONS = Options()
 sys.path = [OPTIONS.GL.ROOT] + sys.path
 from jobs.jobs import Job
@@ -91,6 +97,7 @@ def get_public_ip():
     
 PUBLIC_IP = get_public_ip()
 START = time()
+sockets = {}
 
 
 # formats a dict to be converted to JSON message to send to client
@@ -105,7 +112,8 @@ def make_error(msg, rid=''): return make_message(msg, rid, OUTGOING_TYPE_ERR)
 def make_result(msg, rid=''): return make_message(msg, rid, OUTOING_TYPE_RES)
 def make_pong(msg, rid=''): return make_message('', '', OUTGOING_TYPE_PONG)
 def make_received(msg, rid=''): return make_message('', '', OUTGOING_TYPE_RECEIVED)
-def make_killedjob(msg, rid=''): return make_message('', '', OUTGOING_TYPE_KILLEDJOB)
+def make_killedjob(msg, rid=''): return make_message(msg, '', OUTGOING_TYPE_KILLEDJOB)
+def make_setsession(msg, rid=''): return make_message(msg, '', OUTGOING_TYPE_SETSESSION)
 
 
 # main page handler
@@ -349,13 +357,48 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
     # opens a websocket with the client and initializes requests
     # and message queue
     def open(self):
-        self.id = uuid4()
+        self.id = None
+        self.death = None
         self.requests = {}
+        self.messages = None
+        self.active = False
+        log.info('New WebSocket opened from IP %s' % self.request.remote_ip)
+        
+        
+    # sets the attributes of the websocket so it can be used for making requests
+    def instantiate(self):
+        self.id = str(uuid4())
+        sockets[self.id] = self
+        self.death = None
+        self.requests = {}
+        self.active = True
         self.messages = Queue()
         tornado.ioloop.IOLoop.current().add_callback(self.consume_messages)
-        log.info('WebSocket %s opened from IP %s' % (str(self.id), self.request.remote_ip))
-
+        log.info('Attributed WebSocket %s started.' % self.id)
+        self.messages.put(make_setsession(self.id))
         
+        
+    # replaces (by reference) necessary attributes of self to another socket
+    def replace(self, other):
+    
+        # remove this socket from the server session
+        self.active = False
+        _ = sockets.pop(other.id, None) # remove other from sockets (to add back later)
+        if self.id is not None: sockets[self.id] = other
+        if self.death is not None:
+            tornado.ioloop.IOLoop.current().remove_timeout(self.death)
+
+        # replace this socket's attributes with the other's
+        other.active = True
+        other.id = self.id
+        other.requests = self.requests
+        other.messages = self.messages
+        tornado.ioloop.IOLoop.current().add_callback(other.consume_messages)
+            
+        # update the children of this socket
+        for request in self.requests.values(): request.websocket = other
+        
+
     # accept messages from the client and attempt to build a video processing
     # request/job
     def on_message(self, msg):
@@ -375,6 +418,9 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
         # pong a ping
         msgType = msgDict.get(MSG_KWD_TYPE, None)
         if msgType == MSG_TYPE_PING: self.messages.put(make_pong(''))
+        
+        # start a new websocket 
+        elif msgType == MSG_TYPE_NEWSESSION: self.instantiate()
         
         # build a video processing request
         elif msgType == MSG_TYPE_REQUEST:
@@ -402,6 +448,15 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
                 log.info('Killing job %s from socket %s.' % (self.requests[requestID].id, self.id))
                 self.requests[requestID].destroy()
                 self.messages.put(make_killedjob('Request %s killed' % str(requestID)))
+                
+        # load a different socket based on the user's session id
+        elif msgType == MSG_TYPE_SETSESSION:
+            sessionID = msgDict.get(MSG_KWD_SESSIONID, None)
+            if sessionID not in sockets: self.instantiate()
+            else:
+                log.info('Replacing old session %s because client reconnected.' % sessionID)
+                oldSocket = sockets[sessionID]
+                oldSocket.replace(self)
             
         # unknown
         else:
@@ -410,10 +465,19 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
         
     # get rid of all existing requests this socket has made
     def on_close(self):
-        log.info('WebSocket %s closed. Cleaning up.' % str(self.id))
+        log.info('WebSocket %s closed. Setting destruction.' % str(self.id))
+        self.death = tornado.ioloop.IOLoop.current().add_timeout(
+            timedelta(seconds=OPTIONS.SV.SOCKET_TIMEOUT), self.destroy
+        )
+        
+        
+    # destroy and remove this socket from the server
+    def destroy(self):
         toDestroy = list(self.requests.values())
         for request in toDestroy: request.destroy()
         del self.requests, toDestroy
+        del sockets[self.id]
+        log.info('Websocket %s destroyed.' % self.id)
         
         
     # security checking of connection requests
@@ -427,10 +491,13 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
     # asynchronous message queue for sending messages to the client
     @tornado.gen.coroutine
     def consume_messages(self):
-        while True:
-            message = yield self.messages.get()
-            yield self.write_message(message.strip())
-            yield self.messages.task_done()
+        while self.active:
+            try: 
+                message = yield self.messages.get()
+                yield self.write_message(message.strip())
+                yield self.messages.task_done()
+                
+            except tornado.websocket.WebSocketClosedError: break
         
         
 if __name__ == "__main__":

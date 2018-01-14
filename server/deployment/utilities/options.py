@@ -138,6 +138,7 @@ class ServerOptions:
         self.TESTING = m.get_boolean('testing')
         self.SOCKET_LIMIT = m.get_int('socket_request_limit')
         self.WORKERS = m.get_int('workers')
+        self.SOCKET_TIMEOUT = m.get_float('session_death_timeout')
   
   
 # add to this when you need a new set of options
