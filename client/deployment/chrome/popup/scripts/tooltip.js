@@ -78,8 +78,8 @@ class VGVTooltip {
     // get the mouse position in the body as a percent of the body (instead
     // of pixels)
     static _get_mousepos_percent(event) {
-        var x = event.clientX;
-        var y = event.clientY;
+        var x = event.clientX + window.scrollX;
+        var y = event.clientY + window.scrollY;
         var width = window.innerWidth;
         var height = window.innerHeight;
         return {x: (100.0*x)/width, y: (100.0*y)/height};
@@ -91,14 +91,26 @@ class VGVTooltip {
     _set_position_by_mouse(event) {
         var pos = VGVTooltip._get_mousepos_percent(event);
         var tooltip = this._t_;
+        var cPos = this._c_.getBoundingClientRect();
+        var cpr = {
+            left: 100 * cPos.left / window.innerWidth,
+            right: 100 * cPos.right / window.innerWidth,
+            top: 100 * cPos.top / window.innherHeight,
+            bottom: 100 * cPos.bottom / window.innerHeight,
+            width: 100 * cPos.width / window.innerWidth,
+            height: 100 * cPos.height / window.innerHeight
+        };
 
         if (pos.x > 50) {
             tooltip.style.left = 'auto';
-            tooltip.style.right = (100 - pos.x) + '%';
+            var right = 100 - pos.x;
+            tooltip.style.right = 100 - pos.x + '%';
+            tooltip.style.maxWidth = (pos.x - cpr.left) + '%';
         }
         else {
             tooltip.style.right = 'auto';
             tooltip.style.left = pos.x + '%';
+            tooltip.style.maxWidth = (cpr.right - pos.x) + '%';
         }    
         
         if (pos.y > 50) {

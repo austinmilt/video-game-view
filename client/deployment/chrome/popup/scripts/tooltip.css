@@ -1,5 +1,5 @@
 .vgvtt {
-    position: absolute;
+    position: fixed;
     display: block;
     width: auto;
     height: auto;
