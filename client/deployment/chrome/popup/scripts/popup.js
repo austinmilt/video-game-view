@@ -17,7 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// o server log of activity
+// X server log of activity
+// o menu item to start in offline mode
 // o server do a better job of clearing temp files
 // o function to stop tooltips
 // o menu to stop tooltips
@@ -26,7 +27,7 @@
 // o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
 // o some clients being logged out (websocket closes) when popup closes(?) dunno why
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
-// o store tracker state in chrome.storage.sync and reload on opening
+// X store tracker state in chrome.storage.sync and reload on opening
 // o have some non-interpreted newlines (\n) in your tooltips
 // o prevent multiple injections of content scripts
 // o if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
