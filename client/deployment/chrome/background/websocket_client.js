@@ -49,6 +49,26 @@ var state = {
 var ports = new Set();
 
 
+// load saved results if any
+var requestCount = 0;
+var savedState = {};
+chrome.storage.local.get(['background_state'], function(e) {
+    if (e['background_state'] !== undefined) {
+        savedState = e['background_state']; 
+        if (savedState.hasOwnProperty('id_order')) {
+            for (var requestID of savedState['id_order']) {
+                if (savedState[requestID]['result']) {
+                    state['id_order'].push(requestID);
+                    state[requestID] = savedState[requestID];
+                    state['short_id'] = requestCount + 1;
+                    requestCount += 1;
+                }
+            }
+        }
+    }
+});
+
+
 // functions to deal with ports
 function post_to_port(port, message) {
     message['popup'] = state['popup'];
@@ -125,6 +145,7 @@ function WebSocketClient(host) {
                 if ((messageType == TYPE_RESULT) && requestID) {
                     if (state.hasOwnProperty(requestID)) {
                         state[requestID]['result'] = messageBody;
+                        chrome.storage.local.set({'background_state': state});
                         msg = {
                             type: 'result', tracker: requestID,
                             message: messageBody, message_type: messageType,
@@ -248,7 +269,6 @@ function stop_ws() {
 
 
 // send a video processing request to the server
-var requestCount = 0;
 function send_request(video, replays, title) {
     if (CLIENT) {
         var request = {
@@ -339,6 +359,8 @@ function remove_job(jobID) {
     requestCount = newCount;
     post_to_ports({'type': 'update_shorts', 'data': newShorts});
     
+    // update results saved to local storage
+    chrome.storage.local.set({'background_state': state});
 }
 
 
