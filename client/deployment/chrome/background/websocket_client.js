@@ -116,7 +116,6 @@ function WebSocketClient(host) {
                 // tell server this session ID to try to recover running jobs
                 // or get a new session ID so this can be done later
                 if (state['session_id']) {
-                    console.log('trying to update session on server');
                     msg = {
                         'type': 'tell_session_id', 
                         'session_id': state['session_id']
@@ -124,7 +123,6 @@ function WebSocketClient(host) {
                     self.socket.send(JSON.stringify(msg));
                 }
                 else {
-                    console.log('getting a new session');
                     msg = {'type': 'get_new_session_id'};
                     self.socket.send(JSON.stringify(msg));
                 }
@@ -158,8 +156,6 @@ function WebSocketClient(host) {
                 
                 // if it's a message to set the session ID, do that
                 else if (messageType == TYPE_SETSESSION) {
-                    console.log('setting session ID to ' + message[MESSAGE_KWD_MSG]);
-                    console.log(message);
                     state['session_id'] = message[MESSAGE_KWD_MSG];
                     return;
                 }

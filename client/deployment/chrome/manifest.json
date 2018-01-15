@@ -4,7 +4,7 @@
     "name": "Video Game View",
     "short_name": "VGV",
     "description": "Videogame hud viewer",
-    "version": "0.0.15",
+    "version": "0.0.16",
 
     "browser_action": {
         "default_icon": "popup/assets/icon.png",
@@ -21,7 +21,7 @@
 
     "background": {
         "scripts": ["background/websocket_client.js"],
-        "persistent": false
+        "persistent": true
     },
 
     "permissions": [

@@ -17,11 +17,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// X server log of activity
-// X auto-reconnect websocket without canceling job on server
+// o tooltips displaying when nothing on the screen
 // o client clicking on link throws problem with the hero_timer
-// X options menu tooltips appear in the wrong place
-// o put screen indicator in bottom-right of popup screen showing when the client is trying to connect
+// o put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)
 // o menu item to start in offline mode
 // o server do a better job of clearing temp files
 // o function to stop tooltips
@@ -31,11 +29,14 @@
 // o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
 // o some clients being logged out (websocket closes) when popup closes(?) dunno why
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
-// X store tracker state in chrome.storage.sync and reload on opening
 // o have some non-interpreted newlines (\n) in your tooltips
 // o prevent multiple injections of content scripts
 // o if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
 // o morphling tooltips are off positioned. True for all 6-slotted heroes?
+// X options menu tooltips appear in the wrong place
+// X store tracker state in chrome.storage.sync and reload on opening
+// X server log of activity
+// X auto-reconnect websocket without canceling job on server
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;
