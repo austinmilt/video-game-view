@@ -132,7 +132,23 @@ function create_ability_div(abilityClass, id) {
         html = TOOLTIPS.html(id);
     }
     if (!html.trim()) { html = 'Empty slot.'; }
-    tooltips.add(new VGVTooltip(abilityDiv, vgvContainer, html, divClasses, {'by': 'element', 'direction': 'north'}));
+    var tooltip = new VGVTooltip(
+        abilityDiv, vgvContainer, html, divClasses, 
+        {'by': 'element', 'direction': 'north'}, true
+    );
+    abilityDiv.addEventListener('mouseenter', function() { close_tooltips_but(tooltip); })
+    tooltips.add(tooltip);
+}
+
+
+// close tooltips that are open except a focal one
+function close_tooltips_but(tt) {
+    for (var tooltip of tooltips) {
+        if ((tooltip !== tt) && (tooltip.visible)) { 
+            tooltip.stuck = false;
+            tooltip.hide();
+        }
+    }
 }
 
 
@@ -180,8 +196,6 @@ function create_ability_divs() {
         var talentClass = TALENT_CLASS[hero.abilities.length];
         create_ability_div(talentClass, hero.talents.join(' '));
     }
-    
-    // console.log(divs);
 }
 
     
@@ -191,15 +205,6 @@ function clear_ability_divs() {
     for (var tt of tooltips) { tt.remove(); tooltips.delete(tt); }
     for (var div of divs) { div.remove(); divs.delete(div); }
     while (vgvContainer.lastChild) { vgvContainer.remove(vgvContainer.lastChild); }
-    // $(".ui-tooltip-content").parents('div').remove(); // clear the current tooltips
-    // var curDiv = youtubePlayer.firstChild;
-    // while (!(curDiv === null)) {
-        // nextDiv = curDiv.nextSibling;
-        // if (curDiv.className.includes('ability')) {
-            // curDiv.parentElement.removeChild(curDiv);
-        // }
-        // curDiv = nextDiv;
-    // }
 }
 
 
@@ -208,7 +213,6 @@ function deactivate_tooltips() {
     clear_ability_divs();
     clearInterval(refreshID);
     controlsParent.appendChild(videoControls);
-    // abilitiesContainer.style.display = 'none';
 }
 
 

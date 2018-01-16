@@ -17,6 +17,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
+// o need to tell other tooltips when a new tooltip is to be displayed and hide them (store this in the state of the vgv-container?)
 // o tooltips displaying when nothing on the screen
 // o client clicking on link throws problem with the hero_timer
 // o put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)

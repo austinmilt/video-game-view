@@ -26,32 +26,46 @@ const TMPL_CHILD_TYPE = 'span';
 
 class VGVTooltip {
     
-    constructor(element, container, html, cssClasses, posBy) {
+    constructor(element, container, html, cssClasses, posBy, sticky) {
         
         // update defaults and check args
         if (!element) { throw new Error('Must provide an element that will have the tooltip.'); }
         if (!container) { container = document.body; }
         if (!html) { html = ''; }
         if (!posBy) { posBy = {by: 'mouse'}; }
+        if (!sticky) { sticky = false; }
         
         // create the tooltip
+        this.sticky = sticky;
+        this.stuck = false;
+        this.visible = false;
         var tooltip = document.createElement(TT_HTMLTYPE);
         tooltip.innerHTML = html;
         tooltip.classList.add(CLASS_TT);
         if (cssClasses) { tooltip.classList.add(...cssClasses); }
         var self = this;
         this.display = function(event) {
-            if (posBy.by == 'mouse') {
-                self._set_position_by_mouse(event);
+            if (!self.visible) {
+                self.visible = true;
+                if (posBy.by == 'mouse') {
+                    self._set_position_by_mouse(event);
+                }
+                else if (posBy.by == 'element') {
+                    self._set_pos_by_element(posBy.direction);
+                }
+                self._c_.appendChild(self._t_);
             }
-            else if (posBy.by == 'element') {
-                self._set_pos_by_element(posBy.direction);
-            }
-            self._c_.appendChild(self._t_);
         }
         this.hide = function(event) {
-            try { self._c_.removeChild(self._t_); }
-            catch (e) {}
+            if (self.visible) {
+                if (self.sticky && self.stuck) { return; }
+                try { self._c_.removeChild(self._t_); }
+                catch (e) {}
+                self.visible = false;
+            }
+        }
+        this.toggle_stuck = function(event) {
+            if (self.sticky) { self.stuck = !self.stuck; }
         }
         
         // add the tooltip listeners to display and hide
@@ -61,6 +75,7 @@ class VGVTooltip {
         this._c_ = container;
         element.addEventListener('mouseenter', this.display);
         element.addEventListener('mouseleave', this.hide);
+        if (sticky) { element.addEventListener('click', this.toggle_stuck); }
     }
     
     
@@ -68,8 +83,12 @@ class VGVTooltip {
     remove() {
         this._e_.removeEventListener('mouseenter', this.display);
         this._e_.removeEventListener('mouseleave', this.hide);
+        try { this._e_.removeEventListener('click', this.toggle_stuck); }
+        catch (e) { console.log(e); } // remove eventually
         try { this.hide(); }
-        catch (e) { console.log(e); } // comment out at some point
+        catch (e) { console.log(e); } // remove eventually
+        try { this._t_.remove(); }
+        catch (e) { console.log(e); } // remove eventually
         this._e_ = null;
         this._c_ = null;
     }
