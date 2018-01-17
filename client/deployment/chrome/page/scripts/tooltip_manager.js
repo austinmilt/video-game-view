@@ -24,11 +24,20 @@ var youtubePlayer;
 var hero = {'hero': null};
 var vgvContainer = null;
 
+// user options
 var refreshInterval = 1000.0; // milliseconds
 var showBorders = false;
 chrome.storage.sync.get(['tooltip_interval', 'show_boxes'], function(e){
     if (e['tooltip_interval'] !== undefined) { refreshInterval = e['tooltip_interval'] * 1000.0; }
     if (e['show_boxes'] !== undefined) { showBorders = e['show_boxes']; }
+});
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    if (namespace == 'storage') {
+        for (key in changes) {
+            if (key == 'tooltip_interval') { refreshInterval = changes[key].newValue; }
+            else if (key == 'show_boxes') { showBorders = changes[key].newValue; }
+        }
+    }
 });
 
 var refreshID;

@@ -16,7 +16,7 @@ limitations under the License.
 
 const PING_INTERVAL = 30000;
 const PONG_TIMEOUT = 120000;
-const CONNECT_INTERVAL = 2000;
+const CONNECT_INTERVAL = 5000;
 const MESSAGE_PING = JSON.stringify({'type': 'ping'})
 const MESSAGE_KWD_TYPE = "type";
 const MESSAGE_KWD_MSG = "message";
@@ -34,11 +34,20 @@ const hostURL = 'wss://www.videogameview.com/websocket';
 var connectAttempts = 0;
 var userDisconnectFlag = false;
 
+// user options
 var frameInterval = 1.0;
 var connectAttemptsMax = 3;
 chrome.storage.sync.get(['connect_attempts', 'frame_interval'], function(e) {
     if (e['connect_attempts'] !== undefined) { connectAttemptsMax = e['connect_attempts']; }
     if (e['frame_interval'] !== undefined) { frameInterval = e['frame_interval']; }
+});
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    if (namespace == 'storage') {
+        for (key in changes) {
+            if (key == 'connect_attempts') { connectAttemptsMax = changes[key].newValue; }
+            else if (key == 'frame_interval') { frameInterval = changes[key].newValue; }
+        }
+    }
 });
 
 

@@ -17,7 +17,15 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// o need to tell other tooltips when a new tooltip is to be displayed and hide them (store this in the state of the vgv-container?)
+// X background page does not reload options unless the user restarts the app totally (persistent background, dummy). So you need to make it reload each time the user saves options.
+// o tooltips have %% where percents need to go.
+// o some %variable% variables are not being replaced (see email from arrby).
+// o make a get request on videogameview.com to search for 
+//     match ids to d/l replays. If you already have the id on your server 
+//     (maybe the bucket), just grab it from there. Otherwise download it 
+//     from the dota 2 servers. Delete replays that are older than some age. 
+//     This way you can allow content creators or users to specify match start 
+//     times when a replay isnt available
 // o tooltips displaying when nothing on the screen
 // o client clicking on link throws problem with the hero_timer
 // o put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)
@@ -34,6 +42,8 @@
 // o prevent multiple injections of content scripts
 // o if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
 // o morphling tooltips are off positioned. True for all 6-slotted heroes?
+// o rename video results link
+// X need to tell other tooltips when a new tooltip is to be displayed and hide them (store this in the state of the vgv-container?)
 // X options menu tooltips appear in the wrong place
 // X store tracker state in chrome.storage.sync and reload on opening
 // X server log of activity
@@ -87,11 +97,20 @@ const POPUP_STATE_EDISCONN = 'error_disconnected';
 const POPUP_STATE_TRACK = 'tracker';
 var popupPage = null;
 
+// user options
 var showWarnings = false;
 var confirmRemoval = true;
 chrome.storage.sync.get(['show_warnings', 'confirm_removal'], function(e){
     if (e['show_warnings'] !== undefined) { showWarnings = e['show_warnings']; }
     if (e['confirm_removal'] !== undefined) { confirmRemoval = e['confirm_removal']; }
+});
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    if (namespace == 'storage') {
+        for (key in changes) {
+            if (key == 'show_warnings') { showWarnings = changes[key].newValue; }
+            else if (key == 'confirm_removal') { confirmRemoval = changes[key].newValue; }
+        }
+    }
 });
 
 
