@@ -18,8 +18,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
 // X background page does not reload options unless the user restarts the app totally (persistent background, dummy). So you need to make it reload each time the user saves options.
-// o tooltips have %% where percents need to go.
-// o some %variable% variables are not being replaced (see email from arrby).
+// X tooltips have %% where percents need to go.
+// X some %variable% variables are not being replaced (see email from arrby). (Cant be fixed because error in dota files)
 // o make a get request on videogameview.com to search for 
 //     match ids to d/l replays. If you already have the id on your server 
 //     (maybe the bucket), just grab it from there. Otherwise download it 
