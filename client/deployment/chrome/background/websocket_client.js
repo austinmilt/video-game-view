@@ -37,15 +37,18 @@ var userDisconnectFlag = false;
 // user options
 var frameInterval = 1.0;
 var connectAttemptsMax = 3;
+var alertOnResults = false;
 chrome.storage.sync.get(['connect_attempts', 'frame_interval'], function(e) {
     if (e['connect_attempts'] !== undefined) { connectAttemptsMax = e['connect_attempts']; }
     if (e['frame_interval'] !== undefined) { frameInterval = e['frame_interval']; }
+    if (e['alert_results'] !== undefined) { alertOnResults = e['alert_results']; }
 });
 chrome.storage.onChanged.addListener(function(changes, namespace) {
     if (namespace == 'storage') {
         for (key in changes) {
             if (key == 'connect_attempts') { connectAttemptsMax = changes[key].newValue; }
             else if (key == 'frame_interval') { frameInterval = changes[key].newValue; }
+            else if (key == 'alert_results') { alertOnResults = changes[key].newValue; }
         }
     }
 });
@@ -184,6 +187,9 @@ function WebSocketClient(host) {
                             type: 'result', tracker: requestID,
                             message: messageBody, message_type: messageType,
                             url: state[requestID]['url'], title: state[requestID]['title']
+                        }
+                        if (alertOnResults) { 
+                            alert(state[requestID]['title'] + ' is ready for viewing.');
                         }
                     }
                     else {

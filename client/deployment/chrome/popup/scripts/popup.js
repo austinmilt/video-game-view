@@ -26,6 +26,7 @@
 //     from the dota 2 servers. Delete replays that are older than some age. 
 //     This way you can allow content creators or users to specify match start 
 //     times when a replay isnt available
+// o user can rename video results link (e.g. "My pooper scooper")
 // o tooltips displaying when nothing on the screen
 // o client clicking on link throws problem with the hero_timer
 // o put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)
@@ -38,11 +39,10 @@
 // o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
 // o some clients being logged out (websocket closes) when popup closes(?) dunno why
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
-// o have some non-interpreted newlines (\n) in your tooltips
+// X have some non-interpreted newlines (\n) in your tooltips
 // o prevent multiple injections of content scripts
 // o if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
 // o morphling tooltips are off positioned. True for all 6-slotted heroes?
-// o rename video results link
 // X need to tell other tooltips when a new tooltip is to be displayed and hide them (store this in the state of the vgv-container?)
 // X options menu tooltips appear in the wrong place
 // X store tracker state in chrome.storage.sync and reload on opening
