@@ -125,6 +125,7 @@ MAN_KEY_CST = 'ItemCost'
 MAN_ABS_SKP = ('var_type',)
 MAN_KWD_VAR = r'%{k}%'
 MAN_KWD_PCT = re.compile(r'(%%)(?=([ .!?]|$))')
+MAN_KWD_LIN = re.compile('\\\\n')
 MAN_RGX = '(.*(?<=%s%s%s))|(.*(?<=%s%s$))'
 MAN_FIL_SRV = os.path.abspath(os.path.join(HERE, '..', 'resources', 'keys.pkl'))
 MAN_FIL_CLN = os.path.abspath(os.path.join(HERE, '..', '..', '..', 'client', 'deployment', 'chrome', 'page', 'scripts', 'dotapedia.js'))
@@ -1111,8 +1112,9 @@ def main():
                     # replace the standard %var% style placeholders
                     tooltip = tooltip.replace(MAN_KWD_VAR.format(k=attributeKey), abilitySpecial[attributeKey])
                     
-                    # replace percent escapes with single percents
+                    # replace other characters escapes
                     tooltip = MAN_KWD_PCT.sub('%', tooltip)
+                    tooltip = MAN_KWD_LIN.sub('<br>', tooltip)
                     ability.tooltipData[tooltipDataKey] = tooltip
                     
         # get local name of ability from tooltip data
@@ -1164,8 +1166,9 @@ def main():
                         # replace the standard %var% style placeholders
                         tooltip = tooltip.replace(MAN_KWD_VAR.format(k=attributeKey), abilitySpecial[attributeKey])
                         
-                        # replace percent escapes with single percents
+                        # replace other characters escapes
                         tooltip = MAN_KWD_PCT.sub('%', tooltip)
+                        tooltip = MAN_KWD_LIN.sub('<br>', tooltip)
                         ability.tooltipData[tooltipDataKey] = tooltip
                         
             # get local name of ability from tooltip data
@@ -1210,8 +1213,9 @@ def main():
                     # replace the standard %var% style placeholders
                     tooltip = tooltip.replace(MAN_KWD_VAR.format(k=attributeKey), abilitySpecial[attributeKey])
                     
-                    # replace percent escapes with single percents
+                    # replace other characters escapes
                     tooltip = MAN_KWD_PCT.sub('%', tooltip)
+                    tooltip = MAN_KWD_LIN.sub('<br>', tooltip)
                     item.tooltipData[tooltipDataKey] = tooltip
         
         # store the icon
@@ -1256,8 +1260,9 @@ def main():
                         # replace the standard %var% style placeholders
                         tooltip = tooltip.replace(MAN_KWD_VAR.format(k=attributeKey), abilitySpecial[attributeKey])
                     
-                        # replace percent escapes with single percents
+                        # replace other characters escapes
                         tooltip = MAN_KWD_PCT.sub('%', tooltip)
+                        tooltip = MAN_KWD_LIN.sub('<br>', tooltip)
                         ability.tooltipData[tooltipDataKey] = tooltip
             
             # store the icon
