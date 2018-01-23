@@ -51,9 +51,13 @@
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;
-var connected = false;
 var TIMER;
 var TOOLTIPS;
+
+const CONN_CONNECTED = 'connected';
+const CONN_DISCONNECTED = 'disconnected';
+const CONN_CONNECTING = 'connecting';
+var connection = CONN_DISCONNECTED;
 
 const GRU_TDEL = ':';
 const PORT_NAME = 'vgv_foreground';
@@ -86,18 +90,11 @@ const HTML_TMM = 'tracker_menu_gomenu';
 const HTML_TD = 'tracker_menu_disconnect';
 
 const HTML_PATH_MENU = chrome.runtime.getURL('popup/html/menu.html');
-const HTML_PATH_CONN = chrome.runtime.getURL('popup/html/connecting.html');
-const HTML_PATH_CFAIL = chrome.runtime.getURL('popup/html/connection_failed.html');
 const HTML_PATH_TRACK = chrome.runtime.getURL('popup/html/tracker.html');
-const HTML_PATH_EDISCONN = chrome.runtime.getURL('popup/html/error_disconnected.html');
 const HTML_PATH_REQFORM = chrome.runtime.getURL('popup/html/request_form.html');
 const HTML_CONTENT_SELECTOR = '#contents';
 
 const POPUP_STATE_MENU = 'menu';
-const POPUP_STATE_CONNT = 'connect';
-const POPUP_STATE_CONNR = 'connecting';
-const POPUP_STATE_CONNF = 'connection_failed';
-const POPUP_STATE_EDISCONN = 'error_disconnected';
 const POPUP_STATE_TRACK = 'tracker';
 var popupPage = null;
 
@@ -126,7 +123,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 // connect to the background page that handles job requests and states
 var port = chrome.runtime.connect({ name: PORT_NAME });
 port.postMessage({action: 'get_connection_state'});
-// port.postMessage({action: 'get_viewer_state'});
 
 // initialize the popup's button callbacks and query the background state
 document.addEventListener('DOMContentLoaded', function() { open_correct_page({'todo': 'query'}) });
@@ -140,20 +136,8 @@ function open_correct_page(data) {
     else if (data['todo'] == POPUP_STATE_MENU) {
         open_menu();
     }
-    else if (data['todo'] == POPUP_STATE_CONNT) {
-        open_connecting(true);
-    }
-    else if (data['todo'] == POPUP_STATE_CONNR) {
-        open_connecting(false);
-    }
-    else if (data['todo'] == POPUP_STATE_CONNF) {
-        open_failure(data['message']);
-    }
     else if (data['todo'] == POPUP_STATE_TRACK) {
         open_tracker();
-    }
-    else if (data['todo'] == POPUP_STATE_EDISCONN) {
-        open_disconnect_error(data['message']);
     }
     else {
         alert('Unsure which page to open. Opening menu.');
@@ -164,49 +148,14 @@ function open_correct_page(data) {
 // open the main menu
 function open_menu() {
     $('#contents').load([HTML_PATH_MENU, HTML_CONTENT_SELECTOR].join(' '), function() {
+        popupPage = POPUP_STATE_MENU;
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_MENU});
-        startButton = document.getElementById(HTML_START);
-        if (connected) { startButton.innerHTML = 'Resume'; }
-        else { startButton.innerHTML = 'Start'; }
-        startButton.addEventListener('click', menu_start);
+        update_connection_dependents();
+        document.getElementById(HTML_START).addEventListener('click', menu_start);
         document.getElementById(HTML_OPTIONS).addEventListener('click', menu_options);
         document.getElementById(HTML_FORUM).addEventListener('click', menu_forum);
         document.getElementById(HTML_SAMPLE).addEventListener('click', menu_sample);
         document.getElementById(HTML_WEBSITE).addEventListener('click', menu_mainsite);
-    });
-}
-
-
-// open the connecting page
-function open_connecting(doConnect, msg) {
-    $('#contents').load([HTML_PATH_CONN, HTML_CONTENT_SELECTOR].join(' '), function() {
-        port.postMessage({action: 'set_popup_state', state: POPUP_STATE_CONNR});
-        if (doConnect) {port.postMessage({action: 'connect'}); }
-        if (msg) {
-            var newMessage = document.createElement('p');
-            newMessage.innerText = msg;
-            document.getElementById('connection_message').appendChild(newMessage);
-        }
-    });
-}
-
-
-// open the failed-to-connect page
-function open_failure(msg) {
-    $('#contents').load([HTML_PATH_CFAIL, HTML_CONTENT_SELECTOR].join(' '), function() {
-        port.postMessage({action: 'set_popup_state', state: POPUP_STATE_CONNF});
-        document.getElementById('failed_message').innerHTML = msg;
-        setTimeout(open_menu, 3000);
-    });
-}
-
-
-// open the server disconnected unexepectedly page
-function open_disconnect_error(msg) {
-    $('#contents').load([HTML_PATH_EDISCONN, HTML_CONTENT_SELECTOR].join(' '), function() {
-        port.postMessage({action: 'set_popup_state', state: POPUP_STATE_EDISCONN});
-        document.getElementById('disconnect_message').innerHTML = msg;
-        setTimeout(open_menu, 5000);
     });
 }
 
@@ -216,27 +165,18 @@ function open_tracker() {
     $('#contents').load([HTML_PATH_TRACK, HTML_CONTENT_SELECTOR].join(' '), function() {
         
         // update the popup page status
+        popupPage = POPUP_STATE_TRACK;
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_TRACK});
         
         // add callbacks for links
         var requestButton = document.getElementById(HTML_REQUEST);
         requestButton.addEventListener('click', make_request);
-        
         var mainMenuButton = document.getElementById(HTML_TMM);
         mainMenuButton.addEventListener('click', open_menu);
-        
-        // disconnect callback depends on connection status
-        var disconnectButton = document.getElementById(HTML_TD);
-        if (connected) {
-            disconnectButton.innerText = 'Go Offline';
-            disconnectButton.addEventListener('click', user_disconnect);
-        }
-        else {
-            disconnectButton.innerText = 'Go Online';
-            disconnectButton.addEventListener('click', function() {
-                open_correct_page({'todo': POPUP_STATE_CONNT})
-            });
-        }
+
+        // other small updates
+        update_connection_dependents();
+        build_static_tooltips(document.getElementById('contents'));
         
         // make sure the tracker state is properly set
         port.postMessage({ action: 'get_tracker_state' });
@@ -246,12 +186,8 @@ function open_tracker() {
 
 // connect to the server and move to the tracker page
 function menu_start() {
-    if (connected) {
-        open_correct_page({'todo': POPUP_STATE_TRACK});
-    }
-    else {
-        open_correct_page({'todo': POPUP_STATE_CONNT});
-    }
+    if (connection == 'disconnected') { connect(); }
+    open_correct_page({'todo': POPUP_STATE_TRACK});
 }
 
 
@@ -374,16 +310,7 @@ function get_user_request_info() {
         var output = {};
         $('#vgv_request_form').load([HTML_PATH_REQFORM, HTML_CONTENT_SELECTOR].join(' '), function() {
             form.style.display = 'block';
-            
-            // fill in static tooltips
-            var elementsWithTooltips = form.querySelectorAll('[' + ATTR_TT + ']');
-            for (var i = 0; i < elementsWithTooltips.length; i++) {
-                var element = elementsWithTooltips[i];
-                var container = document.getElementById(element.getAttribute(ATTR_ADDTO));
-                var ttHTML = element.getAttribute(ATTR_TT);
-                var extraClasses = element.getAttribute(ATTR_CLASSES);
-                new VGVTooltip(element, container, ttHTML, extraClasses);
-            }
+            build_static_tooltips(form);
             
             // bind submit and cancel callbacks
             var submit = document.getElementById('vgv_reqform_submit');
@@ -484,12 +411,75 @@ function make_request() {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+// POPUP PAGE UPDATES /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// fills in static tooltips when a new "page" is opened in the popup
+function build_static_tooltips(outer) {
+    if (!outer) { outer = document; }
+    var elementsWithTooltips = outer.querySelectorAll('[' + ATTR_TT + ']');
+    for (var i = 0; i < elementsWithTooltips.length; i++) {
+        var element = elementsWithTooltips[i];
+        var container = document.getElementById(element.getAttribute(ATTR_ADDTO));
+        var ttHTML = element.getAttribute(ATTR_TT);
+        var extraClasses = element.getAttribute(ATTR_CLASSES);
+        new VGVTooltip(element, container, ttHTML, extraClasses);
+    }
+}
+
+// make updates to pages based on the connection status (e.g. enabling disabling
+// certain features)
+function update_connection_dependents() {
+    
+    // on the tracker page, need to change
+    //  o Go Online/Offline
+    //  o Make request link
+    if (popupPage == POPUP_STATE_TRACK) {
+        var disconnectButton = document.getElementById(HTML_TD);
+        var requestButton = document.getElementById(HTML_REQUEST);
+        if (connection == CONN_CONNECTED) {
+            requestButton.setAttribute('enabled', true);
+            disconnectButton.innerText = 'Go Offline';
+            disconnectButton.removeEventListener('click', connect);
+            disconnectButton.addEventListener('click', user_disconnect);
+            disconnectButton.setAttribute('enabled', true);
+        }
+        else if (connection == CONN_CONNECTING) {
+            requestButton.setAttribute('enabled', false);
+            disconnectButton.innerText = 'Connecting';
+            disconnectButton.removeEventListener('click', user_disconnect);
+            disconnectButton.removeEventListener('click', connect);
+            disconnectButton.setAttribute('enabled', false);
+        }
+        else if (connection == CONN_DISCONNECTED) {
+            requestButton.setAttribute('enabled', false);
+            disconnectButton.innerText = 'Go Online';
+            disconnectButton.removeEventListener('click', user_disconnect);
+            disconnectButton.addEventListener('click', connect);
+            disconnectButton.setAttribute('enabled', true);
+        }
+        else { alert(connection); }
+    }
+    
+    
+    // on the main menu, just change the Start/Resume
+    else if (popupPage == POPUP_STATE_MENU) {
+        var startButton = document.getElementById(HTML_START);
+        if (connection == CONN_CONNECTED) { startButton.innerHTML = 'Resume'; }
+        else if (connection == CONN_CONNECTING) { startButton.innerHTML = 'Resume'; }
+        else if (connection == CONN_DISCONNECTED) { startButton.innerHTML = 'Start'; }
+        else { alert(connection); }
+    }
+}
+
 // refresh or initialize the html in the popup to show the background state
 function refresh_all(backgroundState) {
-    connected = backgroundState['connected'];
-    if (connected) { socket_opened(); }
-    else { socket_closed(); }
-    update_general(backgroundState['general']['message'], backgroundState['general']['message_type'])
+    connection = backgroundState['connection'];
+    if (connection == CONN_CONNECTED) { socket_opened(); }
+    else if (connection == CONN_CONNECTING) { socket_reconnecting(); }
+    else if (connection == CONN_DISCONNECTED) { socket_closed(); }
+    update_general(backgroundState['general']['message'], backgroundState['general']['message_type']);
     document.getElementById(HTML_MSGREQ).innerHTML = '';
     for (var i = 0; i < backgroundState['id_order'].length; i++) {
         var key = backgroundState['id_order'][i];
@@ -637,71 +627,42 @@ function update_general(message, messageType) {
 }
 
 
+// update the popup when the socket is trying to connect
+function socket_connecting() {
+    update_connection_dependents();
+}
+
+
 // update the popup when the socket is successfully connected
 function socket_opened() {
-    if (popupPage == POPUP_STATE_TRACK) {
-        document.getElementById(HTML_REQUEST).disabled = false; 
-    }
-    else if (popupPage == POPUP_STATE_CONNR) {
-        open_correct_page({'todo': POPUP_STATE_TRACK});
-    }
+    update_connection_dependents();
 }
+
 
 
 // update the popup when the socket is closed
 function socket_closed(msg) {
-    if (popupPage == POPUP_STATE_TRACK) {
-        document.getElementById(HTML_REQUEST).disabled = true; 
-    }
-    open_correct_page({'todo': POPUP_STATE_EDISCONN, 'message': msg});
+    update_connection_dependents();
 }
 
 
 // update the popup when the socket is closed by the user
 function socket_closed_by_user() {
-    if (popupPage == POPUP_STATE_TRACK) {
-        document.getElementById(HTML_REQUEST).disabled = true; 
-        var disconnectButton = document.getElementById(HTML_TD);
-        if (connected) {
-            disconnectButton.innerText = 'Go Offline';
-            disconnectButton.addEventListener('click', user_disconnect);
-        }
-        else {
-            disconnectButton.innerText = 'Go Online';
-            disconnectButton.addEventListener('click', function() {
-                open_correct_page({'todo': POPUP_STATE_CONNT})
-            });
-        }
-    }
-    
-    else if (popupPage == POPUP_STATE_MENU) {
-        startButton = document.getElementById(HTML_START);
-        if (connected) { startButton.innerHTML = 'Resume'; }
-        else { startButton.innerHTML = 'Start'; }
-    }
+    update_connection_dependents();
 }
 
 
 // update the popup when the socket is reconnecting
 function socket_reconnecting(msg) {
-    if (popupPage == POPUP_STATE_TRACK) {
-        document.getElementById(HTML_REQUEST).disabled = true; 
-    }
-    else if ((popupPage == POPUP_STATE_CONNR) && msg) {
-        var newMessage = document.createElement('p');
-        newMessage.innerText = msg;
-        document.getElementById('connection_message').appendChild(newMessage);
-    }
+    update_connection_dependents(msg);
 }
 
 
-// update the popup when the socket fails to connect
-function socket_failed(msg) {
-    // if (popupPage == POPUP_STATE_CONNR) {
-        // open_correct_page({'todo': POPUP_STATE_CONNF, 'message': msg});
-    // }
+// update the status led
+function set_status_led() {
+    var led = document.getElementById('led_status');
+    led.setAttribute('status', connection);
 }
-
 
 
 // give user a clickable link to view the current results
@@ -733,8 +694,8 @@ port.onMessage.addListener(function(msg) {
     // always update the popup state so we can make sure
     // to handle the incoming data correctly
     popupPage = msg.popup;
-    connected = msg.connected;
-    // started = msg.viewer; // DOESNT WORK BECAUSE EVERY TAB CAN HAVE A DIFFERENT VIEWER STATE
+    connection = msg.connection;
+    set_status_led();
     
     // popup states
     if (msg.type == 'popup_state') {
@@ -774,6 +735,10 @@ port.onMessage.addListener(function(msg) {
     
     else if (msg.type == 'socket_closed_by_user') {
         socket_closed_by_user();
+    }
+    
+    else if (msg.type == 'socket_connecting') {
+        socket_connecting();
     }
     
     else if (msg.type == 'socket_reconnecting') {

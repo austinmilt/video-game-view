@@ -226,27 +226,21 @@ class Job:
         temp = []
         try:
             # try decompressing the replay files if they are compressed (as is
-            # standard from the dota database)
+            # standard from the dota database). Assume they are already
+            # decompressed if an IOError is thrown
             replays = []
             for start, f in self._r:
-                compressed = None
-                
-                # try to load the bz2. If it's not valid, assume it's already a 
-                # decompressed replay file
-                try: compressed = bz2.BZ2File(f, 'rb')
-                except IOError:
-                    replays.append([start, f])
-                    continue
-                    
-                # write the decompressed data to a temporary file
                 if not os.path.exists(OPTIONS.JB.SCRATCH): os.makedirs(OPTIONS.JB.SCRATCH)
                 tf = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+                compressed = bz2.BZ2File(f, 'rb')                    
                 with open(tf, 'wb') as oh:
                     temp.append(tf)
-                    oh.write(compressed.read())
-                
-                replays.append([start, tf])
+                    try:
+                        oh.write(compressed.read())
+                        replays.append([start, tf])
                         
+                    except IOError: replays.append([start, f])
+                
             # load the replays and use them to determine valid labels for video
             # parsing
             vidLabelFile = None
@@ -340,7 +334,7 @@ class Job:
                 #   database or Valve's.
                 urlParts = urlparse(replay)
                 if (urlParts.scheme and urlParts.netloc and urlParts.path):
-                    replayFile = download_file(replayURL)
+                    replayFile = download_file(replay)
                     
                 else: replayFile = download_replay(replay)
                 temp.append(replayFile)

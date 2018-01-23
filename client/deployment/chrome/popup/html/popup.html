@@ -10,7 +10,7 @@
     </head>
 
     <body>
-        <div class="monitor noclick">
+        <div class="monitor noclick" id="monitor">
             <div class="piece output" id="screen">
                 <div id="contents">
                     <div class='menu_div'><h1 class='menu_item' id='start_button'>Start</h1></div>
@@ -21,6 +21,14 @@
                 </div>
                 <div class="piece scanlines noclick"></div>
                 <div class="piece glow noclick"></div>
+            </div>
+            <div 
+                class="led-box" class="has_vgvtt" vgvtt_class="popup_vgvtt" 
+                vgvtt_addto="monitor" vgvtt_html="
+                    Connection status: green=connected; none/off/gray=disconnected; 
+                    blinking=connecting"
+                >
+                <div id="led_status" status="disconnected"></div>
             </div>
         </div>
         <script src='../scripts/popup.js'></script>

@@ -249,6 +249,48 @@ h1 {
 }
 
 
+/* monitor connection status light */
+.led-box {
+    position: absolute;
+    right: 15%;
+    top: 71%;
+    height: 1rem;
+    width: 1rem;
+}
+
+#led_status {
+    margin: 0 auto;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+}
+
+#led_status[status=connected] {
+    background-color: #ABFF00;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
+}
+
+#led_status[status=disconnected] {
+    background-color: #808080;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #404040 0 -1px 9px;
+}
+
+#led_status[status=connecting] {
+    background-color: #03fcca;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #017e65 0 -1px 9px, #03fcca 0 2px 12px;
+    animation: blinkConnecting 2s infinite;
+}
+
+@-webkit-keyframes blinkConnecting {
+    from { background-color: #24E0FF; }
+    50% { 
+        background-color: #006f80; 
+        box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #006f80 0 -1px 9px, #24E0FF 0 2px 0;
+    }
+    to { background-color: #24E0FF; }
+}
+
+
 /* Special formatting for selected text */
 ::-moz-selection {
   background-color: #14fdce;
@@ -353,24 +395,6 @@ h1 {
 }
 
 
-/* dynamic connection status */
-.connection_status:before{
-    content: 'Connecting';
-    font-size: 2rem;
-    animation-name: dotdotdot;
-    animation-duration: 3s;
-    animation-iteration-count: infinite;
-}
-
-@keyframes dotdotdot {
-    0% {content: 'Connecting'}
-    25% {content: 'Connecting.'}
-    50% {content: 'Connecting..'}
-    75% {content: 'Connecting...'}
-    100% {content: 'Connecting'}
-}
-
-
 /* styling for server messages */
 .failed_status{
     color: red;
@@ -415,13 +439,26 @@ h1 {
     text-decoration: underline white;
     cursor: pointer;
 }
-.add_request {
+
+.add_request[enabled=true] {
     color: white;
 }
-.add_request:hover {
+
+.add_request[enabled=true]:hover {
     text-decoration: underline white;
     cursor: pointer;
 }
+
+.add_request[enabled=false] {
+    color: gray;
+    pointer-events: none;
+}
+
+#tracker_menu_disconnect[enabled=false] {
+    color: gray;
+    pointer-events: none;
+}
+
 
 .popup_vgvtt {
     max-width: 50%;

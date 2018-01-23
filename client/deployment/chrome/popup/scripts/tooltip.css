@@ -12,4 +12,5 @@
     pointer-events: none;
     text-overflow: clip;
     white-space: normal;
+    overflow: hidden;
 }

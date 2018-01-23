@@ -17,6 +17,9 @@ limitations under the License.
 const PING_INTERVAL = 30000;
 const PONG_TIMEOUT = 120000;
 const CONNECT_INTERVAL = 5000;
+const CONN_CONNECTED = 'connected';
+const CONN_DISCONNECTED = 'disconnected';
+const CONN_CONNECTING = 'connecting';
 const MESSAGE_PING = JSON.stringify({'type': 'ping'})
 const MESSAGE_KWD_TYPE = "type";
 const MESSAGE_KWD_MSG = "message";
@@ -57,7 +60,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 // tracking tabs and request results
 var state = {
     'general': { 'message': '', 'message_type': TYPE_MSG },
-    'id_order': [], 'connected': false, 'popup': 'menu',
+    'id_order': [], 'connection': CONN_DISCONNECTED, 'popup': 'menu',
     'session_id': null
 };
 var ports = new Set();
@@ -86,8 +89,7 @@ chrome.storage.local.get(['background_state'], function(e) {
 // functions to deal with ports
 function post_to_port(port, message) {
     message['popup'] = state['popup'];
-    message['connected'] = state['connected'];
-    // message['viewer'] = state['viewer']; // CANT WORK BECAUSE EVERY TAB CAN HAVE A DIFFERENT VIEWER STATE
+    message['connection'] = state['connection'];
     port.postMessage(message);
 }
 
@@ -121,6 +123,8 @@ function WebSocketClient(host) {
         
             connectAttempts += 1;
             self.socket = new WebSocket(self.host);
+            state['connection'] = CONN_CONNECTING;
+            post_to_ports({'type': 'socket_connecting'});
             
             // indicate that connection is open and start ping/pong
             self.socket.onopen = function() {
@@ -140,8 +144,8 @@ function WebSocketClient(host) {
                 }
                 
                 
-                // do other stufff
-                state['connected'] = true;
+                // do other stuff
+                state['connection'] = CONN_CONNECTED;
                 post_to_ports({'type': 'socket_opened'});
                 console.log('Connection opened.');
                 self.pinger = setInterval(self.ping, PING_INTERVAL);
@@ -222,7 +226,6 @@ function WebSocketClient(host) {
                 }
                 else { return; } // throw away message for requests that no longer exist
                 post_to_ports(msg);
-                
                 return message;
             }
 
@@ -237,11 +240,11 @@ function WebSocketClient(host) {
                 
                 // update settings that occur on any closure (failed connect, 
                 // error disconnet, user disconnect)
-                state['connected'] = false;
                 clearInterval(self.pinger);
                 
                 // reconnect
                 if (!userDisconnectFlag && (connectAttempts < connectAttemptsMax)) {
+                    state['connection'] = CONN_CONNECTING;
                     post_to_ports({ type: 'socket_reconnecting', message:'(Re)connection attempt ' + connectAttempts });
                     console.log('Connection closed or failed. Attempting reconnect.');
                     var self2 = self;
@@ -253,6 +256,7 @@ function WebSocketClient(host) {
                 
                 // notify user of disconnect
                 else if (!userDisconnectFlag) {
+                    state['connection'] = CONN_DISCONNECTED;
                     var msg = 'Could not (re)connect to server after ';
                     msg += connectAttemptsMax;
                     msg += ' attempts. Closed code ';
@@ -265,6 +269,7 @@ function WebSocketClient(host) {
                 }
                 
                 else {
+                    state['connection'] = CONN_DISCONNECTED;
                     post_to_ports({ type: 'socket_closed_by_user' });
                     console.log('Connection closed by user.');
                     connectAttempts = 0;
@@ -294,7 +299,10 @@ function WebSocketClient(host) {
 // open a socket to the server so we can make requests
 var CLIENT = null;
 function start_ws() {
-    CLIENT = new WebSocketClient(hostURL);
+    if (!CLIENT) {
+        CLIENT = new WebSocketClient(hostURL);
+    }
+    userDisconnectFlag = false;
     CLIENT.connect();
 }
 
@@ -404,16 +412,6 @@ function remove_job(jobID) {
 }
 
 
-// when a popup asks for the viewer state, send along
-// function tell_viewer_state(port) { 
-    // post_to_port(port, {type: 'viewer_state'});
-// }
-
-
-// set the viewer state based on what happened on a popup
-// function set_viewer_state(newState) { state['viewer'] = newState; }
-
-
 // listen for popups to connect to the background page
 chrome.runtime.onConnect.addListener(function(port) {
     
@@ -431,12 +429,6 @@ chrome.runtime.onConnect.addListener(function(port) {
         else if (msg.action == 'get_popup_state') { tell_popup_state(port); }
         else if (msg.action == 'set_popup_state') { set_popup_state(msg.state); }
         else if (msg.action == 'remove_job') { remove_job(msg.job); }
-        
-        // CANT WORK BECAUSE EVERY TAB CAN HAVE A DIFFERENT VIEWER STATE
-        // else if (msg.action == 'get_viewer_state') { tell_viewer_state(port); }
-        // else if (msg.action == 'set_viewer_state') { set_viewer_state(msg.started); }
-        
-        
         else { post_to_port(port, {mesage: 'Background page received uknown action from popup; see background console for details.'}); console.log(msg); }
     });
     
