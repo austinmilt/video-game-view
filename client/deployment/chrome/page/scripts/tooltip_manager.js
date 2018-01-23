@@ -32,7 +32,7 @@ chrome.storage.sync.get(['tooltip_interval', 'show_boxes'], function(e){
     if (e['show_boxes'] !== undefined) { showBorders = e['show_boxes']; }
 });
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-    if (namespace == 'storage') {
+    if (namespace == 'sync') {
         for (key in changes) {
             if (key == 'tooltip_interval') { refreshInterval = changes[key].newValue; }
             else if (key == 'show_boxes') { showBorders = changes[key].newValue; }

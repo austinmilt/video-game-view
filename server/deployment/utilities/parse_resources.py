@@ -32,6 +32,8 @@ import os, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+EXTRACT_IMAGES = True
+
 KWD_QUOTE = '"'
 KWD_TITLESEP = '_'
 KWD_OPEN = '{'
@@ -960,16 +962,17 @@ def write_server_data(heroes, abilities, items, units, outfile):
     replay data. For use in main()
     """
     import cPickle
-    data = {}
+    data = {'ability_order': {}}
     for a in abilities:
         if a.has_key('ID'):
             data[a.get_key().lower()] = a.get('ID').lower()
-    
+            
     for h in heroes:
         name = h.get_name().lower()
         key = h.get_key().lower()
         data[name] = key
         data[key] = name
+        data['ability_order'][name] = h.ablorder
         for a in h.abilities.values():
             data[a.get_key().lower()] = a.get('ID').lower()
             
@@ -981,6 +984,7 @@ def write_server_data(heroes, abilities, items, units, outfile):
         key = u.get_key().lower()
         data[name] = key
         data[key] = name
+        data['ability_order'][name] = u.ablorder
         for a in u.abilities.values():
             data[a.get_key().lower()] = a.get('ID').lower()
 
@@ -1091,10 +1095,14 @@ def main():
     itemTooltips = dict((k, tokens.get(k)) for k in tokens.search_all_keys(RGX_DES_ITEM))
     
     # extract image assets
-    imagesHeroes = HeroImageMap.from_local(get_file('images_heroes'))
-    imagesItems = ItemImageMap.from_local(get_file('images_items'))
-    imagesAbilities = AbilityImageMap.from_local(get_file('images_abilities'))
-    
+    imagesHeroes = {}
+    imagesItems = {}
+    imagesAbilities = {}
+    if EXTRACT_IMAGES:
+        imagesHeroes = HeroImageMap.from_local(get_file('images_heroes'))
+        imagesItems = ItemImageMap.from_local(get_file('images_items'))
+        imagesAbilities = AbilityImageMap.from_local(get_file('images_abilities'))
+        
     # get ability tooltips
     for ability in abilities:
         ability.tooltipData = get_tooltips(abilityTooltips, ability.get_key(), [])
@@ -1137,9 +1145,10 @@ def main():
         hero.set_name(heroLocalNames.get(hero.get_key(), hero.get_name()))
         
         # get hero ability attributes
-        abilityKeys = [hero.get(k) for k in hero.search_all_keys(re.compile(MAN_KEY_ABL))]
+        abilityOrder = sorted(hero.search_all_keys(re.compile(MAN_KEY_ABL)), key=lambda s: int(s[7:]))
+        hero.ablorder = [hero.get(k) for k in abilityOrder]
         hero.abilities = {}
-        for k in abilityKeys:
+        for k in hero.ablorder:
             if abilities.has_key(k): hero.abilities[k] = abilities.get_by_key(k)
             
         # store the icon
@@ -1231,9 +1240,10 @@ def main():
         
         # get unit ability attributes
         unitShortName = unit.get_short()
-        abilityKeys = [unit.get(k) for k in unit.search_all_keys(re.compile(MAN_KEY_ABL))]
+        abilityOrder = sorted(unit.search_all_keys(re.compile(MAN_KEY_ABL)), key=lambda s: int(s[7:]))
+        unit.ablorder = [unit.get(k) for k in abilityOrder]
         unit.abilities = {}
-        for k in abilityKeys:
+        for k in unit.ablorder:
             if abilities.has_key(k): unit.abilities[k] = abilities.get_by_key(k)
             
         # store the icon

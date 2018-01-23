@@ -36,6 +36,7 @@ const hostURL = 'wss://www.videogameview.com/websocket';
 
 var connectAttempts = 0;
 var userDisconnectFlag = false;
+var killJobsOnUnload = true;
 
 // user options
 var frameInterval = 1.0;
@@ -47,7 +48,7 @@ chrome.storage.sync.get(['connect_attempts', 'frame_interval'], function(e) {
     if (e['alert_results'] !== undefined) { alertOnResults = e['alert_results']; }
 });
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-    if (namespace == 'storage') {
+    if (namespace == 'sync') {
         for (key in changes) {
             if (key == 'connect_attempts') { connectAttemptsMax = changes[key].newValue; }
             else if (key == 'frame_interval') { frameInterval = changes[key].newValue; }
@@ -96,6 +97,20 @@ function post_to_port(port, message) {
 function post_to_ports(message) {
     ports.forEach(function(port) {post_to_port(port, message)});
 }
+
+
+// add a listener that will ask the server to kill all running
+// jobs when the extension is unloaded (e.g. if the browser is closed or
+// the extension is reloaded)
+function kill_all_running_jobs() {
+    for (var job of state['id_order']) {
+        if (killJobsOnUnload && !state[job]['result']) {
+            remove_job(job);
+        }
+    }
+}
+chrome.runtime.onSuspend.addListener(function(){killJobsOnUnload = true; kill_all_running_jobs()});
+chrome.runtime.onSuspendCanceled.addListener(function(){killJobsOnUnload = false;})
 
 
 // class for opening and maintaining a (websocket) connection to the
@@ -376,7 +391,7 @@ function set_popup_state(newState) { state['popup'] = newState; }
 function remove_job(jobID) {
     
     // tell the server to kill this job
-    if (CLIENT) {
+    if (CLIENT && !state[jobID]['result']) {
         request = {
             'type': 'kill_job',
             'request_id': jobID

@@ -96,9 +96,10 @@ def parse_args(args):
 # MAIN FUNCTIONS ##############################################################
 # #############################################################################
 
-def build_job_call(video, replays, skip=None, outfile=None, quality=None):
+def build_job_call(video, replays=None, skip=None, outfile=None, quality=None):
     """Builds a call that cal be invoked with Subprocess.call and will call the main() function here."""
     if outfile is None: outfile = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+    if replays is None: replays = []
     toCall = list(JOB_CALLBASE)
     toCall.append(parse_arg(ARG_VIDEO, video, True))
     toCall.append(parse_arg(ARG_OUTFILE, outfile, True))

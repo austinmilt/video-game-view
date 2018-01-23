@@ -17,28 +17,24 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// o make a get request on videogameview.com to search for 
-//     match ids to d/l replays. If you already have the id on your server 
-//     (maybe the bucket), just grab it from there. Otherwise download it 
-//     from the dota 2 servers. Delete replays that are older than some age. 
-//     This way you can allow content creators or users to specify match start 
-//     times when a replay isnt available
+// o hide playback controls in the normal way (i.e. when not hovered)
 // o user can rename video results link (e.g. "My pooper scooper")
 // o tooltips displaying when nothing on the screen
 // o client clicking on link throws problem with the hero_timer
-// o put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)
-// o try to connect to server on start, but if it doesnt just let the user stay in the tracker menu without making requests
 // o server do a better job of clearing temp files
 // o function to stop tooltips
 // o menu to stop tooltips
-// o something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
-// o user disconnecting from server and then reconnecting doesnt work
 // o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
-// o some clients being logged out (websocket closes) when popup closes(?) dunno why
-// o dont force user out of tracker menu when offline (especially when disconnected by server)
 // o prevent multiple injections of content scripts
-// o if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
-// o morphling tooltips are off positioned. True for all 6-slotted heroes?
+// o morphling tooltips are off positioned. True for all 6-slotted heroes (nope, just him)?
+// o move options page to popup instead of opening in extensions
+// X some clients being logged out (websocket closes) when popup closes(?) dunno why
+// X user disconnecting from server and then reconnecting doesnt work
+// X if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
+// X dont force user out of tracker menu when offline (especially when disconnected by server)
+// X something wrong with client with server shuts down... when you hit Start again gets stuck in Connecting....
+// X try to connect to server on start, but if it doesnt just let the user stay in the tracker menu without making requests
+// X put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)
 // X have some non-interpreted newlines (\n) in your tooltips
 // X background page does not reload options unless the user restarts the app totally (persistent background, dummy). So you need to make it reload each time the user saves options.
 // X tooltips have %% where percents need to go.
@@ -48,6 +44,12 @@
 // X store tracker state in chrome.storage.sync and reload on opening
 // X server log of activity
 // X auto-reconnect websocket without canceling job on server
+// X make a get request on videogameview.com to search for 
+//     match ids to d/l replays. If you already have the id on your server 
+//     (maybe the bucket), just grab it from there. Otherwise download it 
+//     from the dota 2 servers. Delete replays that are older than some age. 
+//     This way you can allow content creators or users to specify match start 
+//     times when a replay isnt available
 //////////////////////////////////////////////////////////////////////////////
 
 var started = false;
@@ -106,7 +108,7 @@ chrome.storage.sync.get(['show_warnings', 'confirm_removal'], function(e){
     if (e['confirm_removal'] !== undefined) { confirmRemoval = e['confirm_removal']; }
 });
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-    if (namespace == 'storage') {
+    if (namespace == 'sync') {
         for (key in changes) {
             if (key == 'show_warnings') { showWarnings = changes[key].newValue; }
             else if (key == 'confirm_removal') { confirmRemoval = changes[key].newValue; }

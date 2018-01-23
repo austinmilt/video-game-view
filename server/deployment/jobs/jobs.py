@@ -40,6 +40,8 @@ REPLAY_KEY_SERIES = 'series_id'
 REPLAY_KEY_TYPE = 'series_type'
 REPLAY_URL_CONSTRUCTOR = lambda clu, mat, salt: r'http://replay%s.valve.net/570/%s_%s.dem.bz2' % (clu, mat, salt)
 
+EMPTY_ABILITY = u'6251' # ability placeholder for heroes with <6 abilities
+
 
 
 # ########################################################################### #
@@ -149,7 +151,7 @@ def _pg_(msg):
 # ~~ Job ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 class Job:
     
-    def __init__(self, videoFile, replayFiles, keyFile=None, skip=None):
+    def __init__(self, videoFile, replayFiles=None, keyFile=None, skip=None):
         """
         This class is used to process videos and replay files to package match
         data at regular intervals for the client to view.
@@ -171,6 +173,7 @@ class Job:
                 
         """
         assert os.path.exists(videoFile), 'Cannot locate video file.'
+        if replayFiles is None: replayFiles = []
         for _, replayFile in replayFiles:
             assert os.path.exists(replayFile), 'Cannot locate replay file %s' % replayFile
             
@@ -196,8 +199,6 @@ class Job:
     @staticmethod
     def build_valid_labels(replayIntervals, keys={}):
         validLabels = {}
-        
-        # add valid hero labels
         nd = OPTIONS.ND.KEY
         validHeroes = LinkedIntervalSet([])
         for interval in replayIntervals:
@@ -206,7 +207,6 @@ class Job:
             validHeroes.add(newInterval)
             
         validLabels[OPTIONS.ND.KEY] = validHeroes
-        
         return validLabels
         
         
@@ -215,7 +215,6 @@ class Job:
         Runs the job, i.e. processes video and replay files for detection and
         formats results for output.
         """
-    
         import cPickle, bz2
         from uuid import uuid4
         
@@ -242,9 +241,13 @@ class Job:
                     except IOError: replays.append([start, f])
                 
             # load the replays and use them to determine valid labels for video
-            # parsing
+            # parsing. If there are no replays, then pass nothing as valid labels
             vidLabelFile = None
-            if len(self._r) > 0:
+            if len(replays) == 0:
+                self.replays = []
+                self.valid = None
+                
+            else:
                 self.replays = Replays.from_dems(replays)
                 self.valid = Job.build_valid_labels(self.replays, self.keys)
                 if not os.path.exists(OPTIONS.JB.SCRATCH): os.makedirs(OPTIONS.JB.SCRATCH)
@@ -327,11 +330,10 @@ class Job:
             replayFiles = []
             for time, replay in replays:
             
-                if verbose: _pg_('Downloading replay %s' % replay)
-                    
                 # if it's a url, try to get it from the url.
                 #   Otherwise assume it's a match ID and try to get that from our
                 #   database or Valve's.
+                if verbose: _pg_('Downloading replay %s' % replay)
                 urlParts = urlparse(replay)
                 if (urlParts.scheme and urlParts.netloc and urlParts.path):
                     replayFile = download_file(replay)
@@ -378,21 +380,28 @@ class JobResults:
             
             # pull every hero's state at this time
             focusHeroName = self.job.video.query(OPTIONS.ND.KEY, vidTime)
-            gameHeroNames = self.job.valid[OPTIONS.ND.KEY].query_time(vidTime).data
-            currentReplay = self.job.replays.query_time(vidTime).data
+            if self.job.valid is None: gameHeroNames = [focusHeroName]
+            else: gameHeroNames = self.job.valid[OPTIONS.ND.KEY].query_time(vidTime).data
+            if len(self.job.replays) == 0: currentReplay = None
+            else: currentReplay = self.job.replays.query_time(vidTime).data
             heroStates = {}
             for heroName in gameHeroNames:
-                heroNPCName = self.job.keys[heroName.lower()]
-                try: state = currentReplay.query(heroNPCName, gameTimeSeconds)
+                heroNPCName = self.job.keys.get(heroName.lower(), None)
+                if currentReplay is None: state = None
+                else:
                 
-                # if the replay doesnt know the unit (e.g. if the game time is incorrect), 
-                # just fill in with blank (handled below)
-                except KeyError: state = None
+                    # if the replay doesnt know the unit (e.g. if the game time is incorrect), 
+                    # just fill in with blank (handled below)
+                    try: state = currentReplay.query(heroNPCName, gameTimeSeconds)
+                    except KeyError: state = None
                     
                 # do the same if the replay has no info on the unit (e.g. some
-                # npcs like minions)
+                # npcs like minions). For abilities (since we know some of them
+                # as long as we know the hero), fill in from the known keys
                 if state is None:
-                    abilities = []
+                    allAbilities = [self.job.keys.get(k, None) for k in self.job.keys['ability_order'].get(heroName.lower(), [])]
+                    abilities = [a for a in allAbilities[:6] if a <> EMPTY_ABILITY] # core abilities up to 6
+                    abilities += allAbilities[-8:] # talents
                     items = []
                     
                 # otherwise, fill in with the known keys
