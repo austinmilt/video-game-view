@@ -7,6 +7,7 @@ B. Install and test a basic Tornado server
     >> sudo apt-get upgrade -y
     >> sudo apt-get install python-pip && sudo pip install --update pip
     >> sudo pip install tornado
+    >> sudo pip install google-cloud-storage
     >> sudo nano test.py
         
         import tornado.ioloop

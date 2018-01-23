@@ -16,19 +16,10 @@
 
 const GRU_DESCRIPTION = 'description';
 const GRU_FLAG = '@videogameview';
-const GRU_TDEL = ':';
 const GRU_TITLECLASS = 'title ytd-video-primary-info-renderer';
 const VALID_DOMAINS = ['youtube.com', 'youtu.be'];
 const REQUIRE_REPLAYS = true;
 const RE_BLANK = new RegExp('\s');
-
-// custom error for problems with parsing the video details
-function InvalidTimeError(message) {
-    this.name = 'InvalidTimeError';
-    this.message = message;
-    this.stack = (new Error()).stack;
-}
-InvalidTimeError.prototype = new Error;
 
 
 // custom error for problems with parsing the replay urls
@@ -67,52 +58,22 @@ function NotYoutubeError(message) {
 NotYoutubeError.prototype = new Error;
 
 
-// test for valid time for replay url
-function get_replay_start(time) {
-    var hr;
-    var min;
-    var sec;
-    var tsplit = time.split(GRU_TDEL);
-    
-    // times should always be separated by a colon
-    if (tsplit.length == 2) {
-        hr = '0';
-        min = tsplit[0];
-        sec = tsplit[1];
+// test that replay datum is a url 
+function is_url(node) {
+    if (typeof node.hasAttribute == 'function') {
+        if (node.hasAttribute('href')) { return true; }
     }
-    else if (tsplit.length == 3) {
-        hr = tsplit[0];
-        min = tsplit[1];
-        sec = tsplit[2];
-    }
-    else {
-        alert('Invalid replay start time in video description.');
-    }
-    
-    // check that parts of the time are integer
-    if (isNaN(hr) || (parseInt(hr) != parseFloat(hr))) {
-        throw new InvalidTimeError('Invalid replay start time in video description.');
-    }
-    else if (isNaN(min) || (parseInt(min) != parseFloat(min)) || (parseInt(min) >= 60)) {
-        throw new InvalidTimeError('Invalid replay start time in video description.');
-    }
-    else if (isNaN(sec) || (parseInt(sec) != parseFloat(sec)) || (parseInt(sec) >= 60)) {
-        throw new InvalidTimeError('Invalid replay start time in video description.');
-    }
-    
-    return parseFloat(hr)*3600 + parseFloat(min)*60 + parseFloat(sec);
+    return false;
 }
 
 
 // get url of replay
 function get_replay_url(node) {
-    if (typeof node.hasAttribute == 'function') {
-        if (node.hasAttribute('href')) {
-            try { return (new URL(unescape(node.href))).searchParams.get('q'); }
-            catch (e) { throw new InvalidReplayURL('Invalid replay url.'); }
-        }
+    if (is_url(node)) {
+        try { return (new URL(unescape(node.href))).searchParams.get('q'); }
+        catch (e) { throw new InvalidReplayURL('Invalid replay url.'); }
     }
-    throw new InvalidReplayURL('Invalid replay url.');  
+    else { return node.textContent.trim(); }
 }
 
 
@@ -150,11 +111,11 @@ function get_replay_urls() {
         else if (flag) {
             try {
                 if (nextData == 'time') {
-                    startTime = get_replay_start(text);
+                    startTime = text;
                     nextData = 'replay_url';
                 }
                 else if (nextData == 'replay_url') {
-                    url = get_replay_url(child);
+                    url = get_replay_url(child); // also handles match IDs
                     urls.push([startTime, url]);
                     nextData = 'time';
                 }
@@ -168,13 +129,11 @@ function get_replay_urls() {
     if (!flag && REQUIRE_REPLAYS) {
         throw new MissingFlagError('Missing required info in video description.'); 
     }
-    
-    
 }
 
 
 // function to get video url
-function get_video_url() {
+function get_video_url(url) {
     try { var url = document.location.href; }
     catch (e) { throw new NotYoutubeError('Page is not a youtube page.'); }
     var valid = false;
@@ -198,9 +157,21 @@ function get_video_title() {
 // function to collect and organize request data
 function get_request_data() {
     var video = get_video_url();
-    var replays = get_replay_urls();
     var title = get_video_title();
-    return {'type': 'result', 'video': video, 'replays': replays, 'title': title};
+    var data = {};
+    data['video'] = video;
+    data['title'] = title;
+    try {
+        data['replays'] = get_replay_urls(); 
+        if (data['replays'].length == 0) { data['replays'] = null; }
+    }
+    catch (e) {
+        if ((e.name != 'InvalidDescriptionError') && (e.name != 'MissingFlagError')) {
+            throw e;
+        }
+    }
+    
+    return {'type': 'result', 'data': data};
 }
 
 
@@ -213,3 +184,4 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         sendResponse(data);
     }
 });
+

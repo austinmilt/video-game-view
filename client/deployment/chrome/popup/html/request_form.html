@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Video Processing Request Form</title>
+    </head>
+
+    <body>
+        <div id="contents">
+            <p>
+                Video is missing required information. Specify below.
+                <img 
+                    src="../../options/assets/questionmark.png" alt="(More)" 
+                    class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                    vgvtt_addto="screen" 
+                    vgvtt_html="This video's description is missing information
+                        necessary for VGV. You can enter that information
+                        yourself below, or cancel to skip this request."
+                >
+            </p>
+            <p>
+                Replay information.
+                <img 
+                    src="../../options/assets/questionmark.png" alt="(More)" 
+                    class="more_info has_vgvtt" vgvtt_class="popup_vgvtt" 
+                    vgvtt_addto="screen" 
+                    vgvtt_html="Enter the video replay information, which 
+                        includes the time in the video that the replay
+                        starts to cover (e.g. 0:00 or 2:25) and either
+                        a URL of the replay .dem (or bzipped) that can be 
+                        downloaded, or a match ID (e.g. 3686974155). 
+                        Multiple replays should be separated by a newline
+                        (hit [Enter] or [Return] on your keyboard). Note
+                        that if you supply a match ID and VGV cant find the
+                        match, the video wont be processed."
+                >
+                <br>
+                <textarea id="vgv_reqform_replays" placeholder="0:00 3686974155&#13;&#10;5:55 5686974225"></textarea>
+            <p>
+            <button id="vgv_reqform_submit" class='button'>SUBMIT</button>
+            <button id="vgv_reqform_cancel" class='button'>CANCEL</button>
+        </div>
+    </body>
+</html>

@@ -17,9 +17,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// X background page does not reload options unless the user restarts the app totally (persistent background, dummy). So you need to make it reload each time the user saves options.
-// X tooltips have %% where percents need to go.
-// X some %variable% variables are not being replaced (see email from arrby). (Cant be fixed because error in dota files)
 // o make a get request on videogameview.com to search for 
 //     match ids to d/l replays. If you already have the id on your server 
 //     (maybe the bucket), just grab it from there. Otherwise download it 
@@ -30,7 +27,7 @@
 // o tooltips displaying when nothing on the screen
 // o client clicking on link throws problem with the hero_timer
 // o put screen indicator in bottom-right of popup screen showing when the client is trying to connect (and clicking start doesnt take you to connect screen)
-// o menu item to start in offline mode
+// o try to connect to server on start, but if it doesnt just let the user stay in the tracker menu without making requests
 // o server do a better job of clearing temp files
 // o function to stop tooltips
 // o menu to stop tooltips
@@ -39,10 +36,13 @@
 // o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
 // o some clients being logged out (websocket closes) when popup closes(?) dunno why
 // o dont force user out of tracker menu when offline (especially when disconnected by server)
-// X have some non-interpreted newlines (\n) in your tooltips
 // o prevent multiple injections of content scripts
 // o if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
 // o morphling tooltips are off positioned. True for all 6-slotted heroes?
+// X have some non-interpreted newlines (\n) in your tooltips
+// X background page does not reload options unless the user restarts the app totally (persistent background, dummy). So you need to make it reload each time the user saves options.
+// X tooltips have %% where percents need to go.
+// X some %variable% variables are not being replaced (see email from arrby). (Cant be fixed because error in dota files)
 // X need to tell other tooltips when a new tooltip is to be displayed and hide them (store this in the state of the vgv-container?)
 // X options menu tooltips appear in the wrong place
 // X store tracker state in chrome.storage.sync and reload on opening
@@ -55,6 +55,7 @@ var connected = false;
 var TIMER;
 var TOOLTIPS;
 
+const GRU_TDEL = ':';
 const PORT_NAME = 'vgv_foreground';
 const TYPE_PONG = "pong";
 const TYPE_MSG = "message";
@@ -74,6 +75,7 @@ MESSAGE_CLASS[TYPE_RESULT] = ['request', 'request_result'];
 const HTML_START = 'start_button';
 const HTML_OPTIONS = 'options_button';
 const HTML_FORUM = 'forum_button';
+const HTML_SAMPLE = 'sample_button';
 const HTML_WEBSITE = 'website_button';
 
 const HTML_REQUEST = 'request_button';
@@ -88,6 +90,8 @@ const HTML_PATH_CONN = chrome.runtime.getURL('popup/html/connecting.html');
 const HTML_PATH_CFAIL = chrome.runtime.getURL('popup/html/connection_failed.html');
 const HTML_PATH_TRACK = chrome.runtime.getURL('popup/html/tracker.html');
 const HTML_PATH_EDISCONN = chrome.runtime.getURL('popup/html/error_disconnected.html');
+const HTML_PATH_REQFORM = chrome.runtime.getURL('popup/html/request_form.html');
+const HTML_CONTENT_SELECTOR = '#contents';
 
 const POPUP_STATE_MENU = 'menu';
 const POPUP_STATE_CONNT = 'connect';
@@ -159,7 +163,7 @@ function open_correct_page(data) {
 
 // open the main menu
 function open_menu() {
-    $('#contents').load([HTML_PATH_MENU, '#contents'].join(' '), function() {
+    $('#contents').load([HTML_PATH_MENU, HTML_CONTENT_SELECTOR].join(' '), function() {
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_MENU});
         startButton = document.getElementById(HTML_START);
         if (connected) { startButton.innerHTML = 'Resume'; }
@@ -167,6 +171,7 @@ function open_menu() {
         startButton.addEventListener('click', menu_start);
         document.getElementById(HTML_OPTIONS).addEventListener('click', menu_options);
         document.getElementById(HTML_FORUM).addEventListener('click', menu_forum);
+        document.getElementById(HTML_SAMPLE).addEventListener('click', menu_sample);
         document.getElementById(HTML_WEBSITE).addEventListener('click', menu_mainsite);
     });
 }
@@ -174,7 +179,7 @@ function open_menu() {
 
 // open the connecting page
 function open_connecting(doConnect, msg) {
-    $('#contents').load([HTML_PATH_CONN, '#contents'].join(' '), function() {
+    $('#contents').load([HTML_PATH_CONN, HTML_CONTENT_SELECTOR].join(' '), function() {
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_CONNR});
         if (doConnect) {port.postMessage({action: 'connect'}); }
         if (msg) {
@@ -188,7 +193,7 @@ function open_connecting(doConnect, msg) {
 
 // open the failed-to-connect page
 function open_failure(msg) {
-    $('#contents').load([HTML_PATH_CFAIL, '#contents'].join(' '), function() {
+    $('#contents').load([HTML_PATH_CFAIL, HTML_CONTENT_SELECTOR].join(' '), function() {
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_CONNF});
         document.getElementById('failed_message').innerHTML = msg;
         setTimeout(open_menu, 3000);
@@ -198,7 +203,7 @@ function open_failure(msg) {
 
 // open the server disconnected unexepectedly page
 function open_disconnect_error(msg) {
-    $('#contents').load([HTML_PATH_EDISCONN, '#contents'].join(' '), function() {
+    $('#contents').load([HTML_PATH_EDISCONN, HTML_CONTENT_SELECTOR].join(' '), function() {
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_EDISCONN});
         document.getElementById('disconnect_message').innerHTML = msg;
         setTimeout(open_menu, 5000);
@@ -208,7 +213,7 @@ function open_disconnect_error(msg) {
 
 // open the job tracker page
 function open_tracker() {
-    $('#contents').load([HTML_PATH_TRACK, '#contents'].join(' '), function() {
+    $('#contents').load([HTML_PATH_TRACK, HTML_CONTENT_SELECTOR].join(' '), function() {
         
         // update the popup page status
         port.postMessage({action: 'set_popup_state', state: POPUP_STATE_TRACK});
@@ -262,6 +267,12 @@ function menu_forum() {
 }
 
 
+// navigate to sample video(s)
+function menu_sample() {
+    window.open('https://www.youtube.com/watch?v=qG8JpKFPNdE', '_blank');
+}
+
+
 // navigate to main website
 function menu_mainsite() {
     window.open('https://www.videogameview.com', '_blank');
@@ -297,23 +308,169 @@ function remove_job(jobID) {
 }
 
 
+// custom errors for problems with parsing the video details
+function InvalidTimeError(message) {
+    this.name = 'InvalidTimeError';
+    this.message = message;
+    this.stack = (new Error()).stack;
+}
+InvalidTimeError.prototype = new Error;
+
+function InvalidDescriptionError(message) {
+    this.name = 'InvalidDescriptionError';
+    this.message = message;
+    this.stack = (new Error()).stack;
+}
+InvalidDescriptionError.prototype = new Error;
+
+
+// parse replay start times
+function parse_replay_start(time) {
+    var hr;
+    var min;
+    var sec;
+    var tsplit = time.split(GRU_TDEL);
+    
+    // times should always be separated by a colon
+    if (tsplit.length == 2) {
+        hr = '0';
+        min = tsplit[0];
+        sec = tsplit[1];
+    }
+    else if (tsplit.length == 3) {
+        hr = tsplit[0];
+        min = tsplit[1];
+        sec = tsplit[2];
+    }
+    else {
+        alert('Invalid replay start time in video description.');
+    }
+    
+    // check that parts of the time are integer
+    if (isNaN(hr) || (parseInt(hr) != parseFloat(hr))) {
+        throw new InvalidTimeError('Invalid replay start time in video description.');
+    }
+    else if (isNaN(min) || (parseInt(min) != parseFloat(min)) || (parseInt(min) >= 60)) {
+        throw new InvalidTimeError('Invalid replay start time in video description.');
+    }
+    else if (isNaN(sec) || (parseInt(sec) != parseFloat(sec)) || (parseInt(sec) >= 60)) {
+        throw new InvalidTimeError('Invalid replay start time in video description.');
+    }
+    
+    return parseFloat(hr)*3600 + parseFloat(min)*60 + parseFloat(sec);
+}
+
+
+// open request details form in tracker page
+function get_user_request_info() {
+    return new Promise(function(resolve, reject) {
+        
+        // open the form
+        var form = document.createElement('div');
+        form.setAttribute('id', 'vgv_request_form');
+        form.style.display = 'none';
+        var screen = document.getElementById('screen');
+        screen.appendChild(form);
+        var output = {};
+        $('#vgv_request_form').load([HTML_PATH_REQFORM, HTML_CONTENT_SELECTOR].join(' '), function() {
+            form.style.display = 'block';
+            
+            // fill in static tooltips
+            var elementsWithTooltips = form.querySelectorAll('[' + ATTR_TT + ']');
+            for (var i = 0; i < elementsWithTooltips.length; i++) {
+                var element = elementsWithTooltips[i];
+                var container = document.getElementById(element.getAttribute(ATTR_ADDTO));
+                var ttHTML = element.getAttribute(ATTR_TT);
+                var extraClasses = element.getAttribute(ATTR_CLASSES);
+                new VGVTooltip(element, container, ttHTML, extraClasses);
+            }
+            
+            // bind submit and cancel callbacks
+            var submit = document.getElementById('vgv_reqform_submit');
+            var ff = form;
+            var oo = output;
+            submit.addEventListener('click', function() {
+                
+                // parse the replay text
+                var replayText = ff.querySelector('#vgv_reqform_replays').value;
+                oo['replays'] = [];
+                oo['type'] = 'result';
+                for (var line of replayText.trim().split('\n')) {
+                    if (!line) { continue; }
+                    var replayPair = line.trim().split(' ');
+                    if (replayPair.length != 2) {
+                        reject(new InvalidDescriptionError('Invalid info in user-given replay data.'));
+                    }
+                    oo['replays'].push(replayPair);
+                }
+                
+                // finish up
+                ff.remove();
+                resolve(oo);
+            });
+            
+            var cancel = document.getElementById('vgv_reqform_cancel');
+            cancel.addEventListener('click', function() {
+                oo['type'] = 'canceled';
+                ff.remove();
+                resolve(oo);
+            });
+        });
+    });
+}
+
+
+// does the actual porting of request to the background script
+function post_request_to_background(requestData) {
+    
+    // process replay start time strings
+    if (!requestData['replays']) { throw new Error('Missing required replay information.'); }
+    for (var i = 0; i < requestData['replays'].length; i++) {
+        requestData['replays'][i][0] = parse_replay_start(requestData['replays'][i][0]);
+    }
+    
+    // now that we have the details, post to the background
+    port.postMessage({
+        'action': 'request', 'video': requestData['video'], 
+        'replays': requestData['replays'], 'title': requestData['title']
+    });
+}
+
+
 // send a request to the background page to send to the server
 function make_request() {
     return new Promise(function(resolve, reject) {
+        
+        // get the request data for sending to the background page
         inject_js('popup/scripts/get_request_data.js')
             .then(function() {
                 chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {trigger: 'get_request_data'}, function(data) {
+                    chrome.tabs.sendMessage(tabs[0].id, {trigger: 'get_request_data'}, function(response) {
                         var e = chrome.runtime.lastError;
                         if (e){ alert('Failed to query request script with error: ' + e.message); }
-                        if (data['type'] == 'error') {
-                            alert(data['message']);
+                        if (response['type'] == 'error') {
+                            alert(response['message']);
                         }
-                        else if (data['type'] == 'result') {
-                            port.postMessage({
-                                'action': 'request', 'video': data['video'], 
-                                'replays': data['replays'], 'title': data['title']
-                            });
+                        else if (response['type'] == 'result') {
+                            
+                            // if some replay info is missing, prompt the user
+                            // for it
+                            var data = response['data'];
+                            if (!data['replays']) {
+                                get_user_request_info()
+                                .then(function(resolution) {
+                                    if (resolution['type'] == 'result') {
+                                        data['replays'] = resolution['replays'];
+                                        post_request_to_background(data);
+                                    }
+                                })
+                                .catch(function(rejection) { alert(rejection) });
+                            }
+                            
+                            // otherwise send the request to the background
+                            else {
+                                post_request_to_background(data);
+                            }
                         }
                         else {
                             alert('Issue getting request data. Inform the developer.');
@@ -321,7 +478,8 @@ function make_request() {
                     });
                 });
             })
-            .then(function(){resolve();});
+            .then(function(){resolve()})
+            .catch(function(rejection){ alert(rejection) });
     });
 }
 

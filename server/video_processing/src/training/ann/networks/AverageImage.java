@@ -101,9 +101,12 @@ public class AverageImage extends Network implements Serializable {
         if (validLabels == null) { validLabels = this.protoImages.keySet(); }
         for (String name : validLabels) {
             protoImage = this.protoImages.get(name);
-            error = pearsons(sample, protoImage);
-            error *= error;
-            error = 1 - error;
+            if (protoImage == null) { error = Double.POSITIVE_INFINITY; }
+            else {
+                error = pearsons(sample, protoImage);
+                error *= error;
+                error = 1 - error;
+            }
             if (error < minError) {
                 minError = error;
                 bestLabel = name;

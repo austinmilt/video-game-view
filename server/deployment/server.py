@@ -160,6 +160,7 @@ class JobSubprocess:
             yield self.redirect_stream(self.process.stdout, make_message)
             yield self.redirect_stream(self.process.stderr, make_warning)
             
+
         # ignore the return code of the job, but assume we failed if the
         # file that is supposed to have been produced is not there
         try: returnCode = yield self.future

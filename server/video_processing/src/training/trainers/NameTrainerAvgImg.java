@@ -24,7 +24,6 @@ import image_libraries.NameImageLibrary;
 import training.ann.networks.AverageImage;
 import training.math.Matrix2D;
 import options.Options;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;

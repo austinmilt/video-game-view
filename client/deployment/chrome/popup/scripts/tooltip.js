@@ -122,7 +122,6 @@ class VGVTooltip {
 
         if (pos.x > 50) {
             tooltip.style.left = 'auto';
-            var right = 100 - pos.x;
             tooltip.style.right = 100 - pos.x + '%';
             tooltip.style.maxWidth = (pos.x - cpr.left) + '%';
         }

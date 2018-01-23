@@ -32,6 +32,14 @@ from utilities.options import Options
 OPTIONS = Options()
 del here
 
+REPLAY_GET_FMT = r'https://api.opendota.com/api/replays?match_id=%s'
+REPLAY_KEY_CLUSTER = 'cluster'
+REPLAY_KEY_SALT = 'replay_salt'
+REPLAY_KEY_MATCH = 'match_id'
+REPLAY_KEY_SERIES = 'series_id'
+REPLAY_KEY_TYPE = 'series_type'
+REPLAY_URL_CONSTRUCTOR = lambda clu, mat, salt: r'http://replay%s.valve.net/570/%s_%s.dem.bz2' % (clu, mat, salt)
+
 
 
 # ########################################################################### #
@@ -131,6 +139,13 @@ class Time:
         
 
         
+# for printing stuff during command-line execution that may be going to remote
+# destination
+def _pg_(msg):
+    print '\n' + msg
+    sys.stdout.write('\n' + msg)
+    sys.stdout.flush()
+    
 # ~~ Job ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 class Job:
     
@@ -201,31 +216,57 @@ class Job:
         formats results for output.
         """
     
-        import cPickle
+        import cPickle, bz2
         from uuid import uuid4
         
         # try loading the mapping from npc_dota name to regular name
         if os.path.exists(self._k):
             self.keys = cPickle.load(open(self._k, 'rb'))
             
-        # load the replays and use them to determine valid labels for video
-        # parsing
-        vidLabelFile = None
-        if len(self._r) > 0:
-            self.replays = Replays.from_dems(self._r)
-            self.valid = Job.build_valid_labels(self.replays, self.keys)
-            if not os.path.exists(OPTIONS.JB.SCRATCH): os.makedirs(OPTIONS.JB.SCRATCH)
-            vidLabelFile = os.path.abspath(os.path.join(OPTIONS.JB.SCRATCH, str(uuid4())))
-            _ = Video.write_valid_labels(self.valid, vidLabelFile)
-        
-        # process the video
+        temp = []
         try:
+            # try decompressing the replay files if they are compressed (as is
+            # standard from the dota database)
+            replays = []
+            for start, f in self._r:
+                compressed = None
+                
+                # try to load the bz2. If it's not valid, assume it's already a 
+                # decompressed replay file
+                try: compressed = bz2.BZ2File(f, 'rb')
+                except IOError:
+                    replays.append([start, f])
+                    continue
+                    
+                # write the decompressed data to a temporary file
+                if not os.path.exists(OPTIONS.JB.SCRATCH): os.makedirs(OPTIONS.JB.SCRATCH)
+                tf = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+                with open(tf, 'wb') as oh:
+                    temp.append(tf)
+                    oh.write(compressed.read())
+                
+                replays.append([start, tf])
+                        
+            # load the replays and use them to determine valid labels for video
+            # parsing
+            vidLabelFile = None
+            if len(self._r) > 0:
+                self.replays = Replays.from_dems(replays)
+                self.valid = Job.build_valid_labels(self.replays, self.keys)
+                if not os.path.exists(OPTIONS.JB.SCRATCH): os.makedirs(OPTIONS.JB.SCRATCH)
+                vidLabelFile = os.path.abspath(os.path.join(OPTIONS.JB.SCRATCH, str(uuid4())))
+                temp.append(vidLabelFile)
+                _ = Video.write_valid_labels(self.valid, vidLabelFile)
+            
+            # process the video
             self.video = Video.from_video(self._v, vidLabelFile, self.skip)
             
+        # delete temporary files
         finally:
-            try: os.remove(vidLabelFile)
-            except: print 'Could not remove temporary file %s' % vidLabelFile
-            
+            for f in temp:
+                if os.path.exists(f):
+                    try: os.remove(f)
+                    except: print 'Could not remove temporary file %s' % f
         
         # grab video times from the video processing results and use to summarize
         self.results = JobResults(self)
@@ -255,7 +296,7 @@ class Job:
                 
         
     @staticmethod
-    def from_urls(videoURL, replayURLs=None, keyFile=None, skip=None, quality=None, verbose=False):
+    def from_urls(videoURL, replays=None, keyFile=None, skip=None, quality=None, verbose=False):
         """
         Constructs a new Job by downloading files instead of directly from 
         files on disk.
@@ -263,8 +304,11 @@ class Job:
         Args:
             videoURL (str): valid youtube url to the video to download
             
-            replayURLs (list): @see <code>Job.__init__</code>, but replace 
-                file paths to url paths
+            replays (list): @see <code>Job.__init__</code>, but replace 
+                file paths to url paths (or match IDs). Note, this can
+                try to download replays from dota's replay database if you
+                provide the match ID instead of a URL. However, if the replay
+                is no longer on the database, an error will be raised.
                 
             keyFile (str): @see <code>Job.__init__</code>
             
@@ -276,33 +320,38 @@ class Job:
             
         Returns:
             Job: job constructed from downloadedurls instead of files
+            
         """
-        if replayURLs is None: replayURLs = []
-        if quality is None: quality = OPTIONS.JB.QUALITY
-        
-        if verbose:
-            sys.stdout.write('\nDownloading video %s with requested quality %0.0f' % (videoURL, quality))
-            sys.stdout.flush()
+        try:
+            from urlparse import urlparse
+            if replays is None: replays = []
+            if quality is None: quality = OPTIONS.JB.QUALITY
+            if verbose: _pg_('Downloading video %s with requested quality %0.0f' % (videoURL, quality))
+            videoFile = download_youtube_video(videoURL, quality=quality)
+            temp = []
+            temp.append(videoFile)
+            replayFiles = []
+            for time, replay in replays:
             
-        videoFile = download_youtube_video(videoURL, quality=quality)
-        temp = []
-        temp.append(videoFile)
-        replayFiles = []
-        for time, replayURL in replayURLs:
-        
-            if verbose:
-                sys.stdout.write('\nDownloading replay %s' % replayURL)
-                sys.stdout.flush()
-                
-            replayFile = download_file(replayURL)
-            temp.append(replayFile)
-            replayFiles.append([time, replayFile])
-        
-        if verbose:
-            sys.stdout.write('\nBuilding Job.')
-            sys.stdout.flush()
+                if verbose: _pg_('Downloading replay %s' % replay)
+                    
+                # if it's a url, try to get it from the url.
+                #   Otherwise assume it's a match ID and try to get that from our
+                #   database or Valve's.
+                urlParts = urlparse(replay)
+                if (urlParts.scheme and urlParts.netloc and urlParts.path):
+                    replayFile = download_file(replayURL)
+                    
+                else: replayFile = download_replay(replay)
+                temp.append(replayFile)
+                replayFiles.append([time, replayFile])
             
-        return Job(videoFile, replayFiles, keyFile, skip)
+            if verbose: _pg_('Building job.')
+            return Job(videoFile, replayFiles, keyFile, skip)
+            
+        except Exception as e:
+            _pg_(e.message)
+            raise e
         
         
         
@@ -340,9 +389,23 @@ class JobResults:
             heroStates = {}
             for heroName in gameHeroNames:
                 heroNPCName = self.job.keys[heroName.lower()]
-                state = currentReplay.query(heroNPCName, gameTimeSeconds)
-                abilities = [self.job.keys.get(k, None) for k in state.data['abilities']]
-                items = [self.job.keys.get(k, None) for k in state.data['items']]
+                try: state = currentReplay.query(heroNPCName, gameTimeSeconds)
+                
+                # if the replay doesnt know the unit (e.g. if the game time is incorrect), 
+                # just fill in with blank (handled below)
+                except KeyError: state = None
+                    
+                # do the same if the replay has no info on the unit (e.g. some
+                # npcs like minions)
+                if state is None:
+                    abilities = []
+                    items = []
+                    
+                # otherwise, fill in with the known keys
+                else:
+                    abilities = [self.job.keys.get(k, None) for k in state.data['abilities']]
+                    items = [self.job.keys.get(k, None) for k in state.data['items']]
+                    
                 heroStates[heroName] = { 'abilities': abilities, 'items': items }
                 
             # add results at this time to the output
@@ -439,7 +502,7 @@ def download_youtube_video(url, outfile=None, quality=None):
     return outfile
     
     
-# ~~ download_replay() ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ # 
+# ~~ download_file() ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ # 
 def download_file(url, outfile=None):
     """
     Downloads a file at a URL.
@@ -447,7 +510,7 @@ def download_file(url, outfile=None):
     Args:
         url (str): URL of the file to download
         outfile (str): (optional) local path to save the file. Default is to
-            save to a random new file in the executing directory.
+            save to a random new file in the scratch directory.
             
     Returns:
         str: path to the output file (same as outfile)
@@ -463,6 +526,73 @@ def download_file(url, outfile=None):
     if not os.path.exists(os.path.dirname(outfile)): os.makedirs(os.path.dirname(outfile))
     with open(outfile, 'wb') as fh: fh.write(data)
     return outfile
+    
+    
+# ~~ download_replay() ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ # 
+def download_replay(matchID, outfile=None):
+    """
+    Downloads a replay by the match ID.
+    
+    Args:
+        matchID (str): match ID of the match of which to get a replay
+        outfile (str): (optional) local path to save the file. Default is to
+            save to a random new file in the scratch directory.
+            
+    Returns:
+        str: path to the output file (same as outfile)
+    """
+    import urllib2, json, threading
+    from google.cloud import storage
+    from uuid import uuid4
+    
+    # update user preferences
+    if outfile is None: outfile = os.path.abspath(os.path.join(OPTIONS.JB.SCRATCH, str(uuid4())))
+    if not os.path.exists(os.path.dirname(outfile)): os.makedirs(os.path.dirname(outfile))
+    
+    # first see if the replay is available on the VGV database and download
+    #   download from there if so
+    # if this doesnt work, see https://cloud.google.com/docs/authentication/getting-started
+    gcpClient = storage.Client.from_service_account_json(OPTIONS.JB.CRED)
+    gcpBucket = gcpClient.get_bucket(OPTIONS.JB.REPLAY_BUCKET)
+    bucketMatches = [b for b in gcpBucket.list_blobs(prefix=str(matchID))]
+    if len(bucketMatches) > 0:
+        blob = bucketMatches[0]
+        blob.download_to_filename(outfile)
+    
+    # otherwise request the info necessary to construct the replay download url
+    #   so we can try to download from the dota servers
+    else:
+        details = json.loads(urllib2.urlopen(REPLAY_GET_FMT % str(matchID)).read())[0]
+        if (type(details) is str): 
+            raise ValueError('Could not find the replay for match %s. It may be an incorrect match ID or the replay may no longer exist.' % matchID)
+        
+        salt = None
+        match = None
+        cluster = None
+        series = None
+        seriesType = None
+        try:
+            salt = details[REPLAY_KEY_SALT]
+            match = details[REPLAY_KEY_MATCH]
+            cluster = details[REPLAY_KEY_CLUSTER]
+            series = details[REPLAY_KEY_SERIES]
+            seriesType = details[REPLAY_KEY_TYPE]
+        
+        except: raise RuntimeError('Unable to construct the replay download URL for %s because some details are missing from the detail request.' % matchID)
+        
+        # download the replay
+        url = REPLAY_URL_CONSTRUCTOR(cluster, match, salt)
+        download_file(url, outfile)
+        
+        # upload the replay to the database
+        if OPTIONS.JB.UPLOAD_NEW_REPLAYS:
+            upload = lambda: gcpBucket.blob(str(matchID)).upload_from_filename(outfile)
+            thread = threading.Thread(target=upload)
+            thread.start()
+            
+    return outfile
+            
+    
     
     
 if __name__ == '__main__':

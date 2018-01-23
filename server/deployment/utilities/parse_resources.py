@@ -970,8 +970,8 @@ def write_server_data(heroes, abilities, items, units, outfile):
         key = h.get_key().lower()
         data[name] = key
         data[key] = name
-        # for a in h.abilities.values():
-            # data[a.get_key().lower()] = a.get('ID').lower()
+        for a in h.abilities.values():
+            data[a.get_key().lower()] = a.get('ID').lower()
             
     for i in items:
         data[i.get_key().lower()] = i.get('ID').lower()
@@ -981,8 +981,8 @@ def write_server_data(heroes, abilities, items, units, outfile):
         key = u.get_key().lower()
         data[name] = key
         data[key] = name
-        # for a in u.abilities.values():
-            # data[a.get_key().lower()] = a.get('ID').lower()
+        for a in u.abilities.values():
+            data[a.get_key().lower()] = a.get('ID').lower()
 
     with open(outfile, 'wb') as fh: cPickle.dump(data, fh)
     return outfile
@@ -999,16 +999,16 @@ def write_client_data(heroes, abilities, items, units, outfile):
         if a.has_key('ID'):
             data[a.get('ID')] = a.tooltip.to_jsstr()
         
-    # for hero in heroes:
-        # for ability in hero.abilities.values(): 
-            # data[ability.get('ID')] = ability.tooltip.to_jsstr()
+    for hero in heroes:
+        for ability in hero.abilities.values(): 
+            data[ability.get('ID')] = ability.tooltip.to_jsstr()
             
     for item in items:
         data[item.get('ID')] = item.tooltip.to_jsstr()
         
-    # for unit in units:
-        # for ability in unit.abilities.values():
-            # data[ability.get('ID')] = ability.tooltip.to_jsstr()
+    for unit in units:
+        for ability in unit.abilities.values():
+            data[ability.get('ID')] = ability.tooltip.to_jsstr()
         
     # write the file
     fh = open(outfile, 'w')

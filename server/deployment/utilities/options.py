@@ -24,8 +24,13 @@ import os
 # DEFINE CUSTOM OPTIONS HERE ##################################################
 # #############################################################################
 
+def print_options(instance):
+    print '\n'.join(['%s: %s' % (k, str(instance.__dict__[k])) for k in instance.__dict__])
+        
+
 class GlobalOptions:
     NAME = 'global'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         self.parser = ValueParsers(GlobalOptions.NAME, dataMap)
         map = {
@@ -48,6 +53,7 @@ class GlobalOptions:
         
 class ClockTrainerOptions:
     NAME = 'clock_trainer'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(ClockTrainerOptions.NAME, dataMap, globalOptions)
         self.TRAINING_DIR = m.get_file('training_dir')
@@ -76,6 +82,7 @@ class ClockTrainerOptions:
         
 class ClockDetectorOptions:
     NAME = 'clock_detector'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(ClockDetectorOptions.NAME, dataMap, globalOptions)
         self.ROI = m.get_list_double('frame_region')
@@ -86,6 +93,7 @@ class ClockDetectorOptions:
 
 class NameTrainerOptions:
     NAME = 'name_trainer'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(NameTrainerOptions.NAME, dataMap, globalOptions)
         self.TRAINING_DIR = m.get_file('training_dir')
@@ -96,6 +104,7 @@ class NameTrainerOptions:
         
 class NameDetectorOptions:
     NAME = 'name_detector'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(NameDetectorOptions.NAME, dataMap, globalOptions)
         self.ROI = m.get_list_double('frame_region')
@@ -106,6 +115,7 @@ class NameDetectorOptions:
         
 class VideoParserOptions:
     NAME = 'video_parser'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(VideoParserOptions.NAME, dataMap, globalOptions)
         self.CSV_SEP_COL = m.get_string('csv_separator_column')
@@ -122,16 +132,21 @@ class VideoParserOptions:
         
 class JobOptions:
     NAME = 'job'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(JobOptions.NAME, dataMap, globalOptions)
         self.KEYS = m.get_file('keymap_default')
         self.JAR_DIR = m.get_file('jar_dir')
         self.QUALITY = m.get_float('quality_default')
         self.SCRATCH = m.get_file('scratch_directory')
+        self.CRED = m.get_file('gcp_credentials')
+        self.REPLAY_BUCKET = m.get_string('gcp_replay_bucket')
+        self.UPLOAD_NEW_REPLAYS = m.get_boolean('gcp_upload_new_replays')
         
         
 class ServerOptions:
     NAME = 'server'
+    def print_options(self): return print_options(self)
     def __init__(self, dataMap, globalOptions):
         m = ValueParsers(ServerOptions.NAME, dataMap, globalOptions)
         self.PORTS = m.get_list_int('ports')

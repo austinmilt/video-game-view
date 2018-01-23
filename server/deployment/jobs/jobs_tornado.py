@@ -123,7 +123,7 @@ def main(**args):
     skip = args.get('skip', None)
     
     # run the job
-    job = Job.from_urls(video, replayURLs=replays, skip=skip, quality=None, verbose=True)
+    job = Job.from_urls(video, replays=replays, skip=skip, quality=None, verbose=True)
     job.run()
     job.cleanup()
     

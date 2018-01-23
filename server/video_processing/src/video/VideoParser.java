@@ -934,9 +934,12 @@ public class VideoParser implements Iterable<VideoParser.Frame> {
         String[] a = new String[]{
 //                "-t", "play",
                 "-t", "parse",
-                "--video", "D:\\Dropbox\\video-game-view\\server\\test\\video_480p_r01.avi",
-                "-o", "D:\\Dropbox\\video-game-view\\server\\test\\results.csv",
-                "-f", "D:\\Dropbox\\video-game-view\\server\\test\\labels_r01.csv",
+                "--video", "D:\\Dropbox\\video-game-view\\server\\deployment\\java\\video.mp4",
+                "-f", "D:\\Dropbox\\video-game-view\\server\\deployment\\java\\labels.txt",
+                "-o", "D:\\Dropbox\\video-game-view\\server\\deployment\\java\\results.csv",
+//                "--video", "D:\\Dropbox\\video-game-view\\server\\test\\video_480p_r01.avi",
+//                "-o", "D:\\Dropbox\\video-game-view\\server\\test\\results.csv",
+//                "-f", "D:\\Dropbox\\video-game-view\\server\\test\\labels_r01.csv",
                 "-s", "1"
         };
         if (args.length == 0) { args = a; }
