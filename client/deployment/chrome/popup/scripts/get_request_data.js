@@ -14,6 +14,8 @@
  * limitations under the License.
 */
 
+(function() {
+    
 const GRU_DESCRIPTION = 'description';
 const GRU_FLAG = '@videogameview';
 const GRU_TITLECLASS = 'title ytd-video-primary-info-renderer';
@@ -174,7 +176,6 @@ function get_request_data() {
     return {'type': 'result', 'data': data};
 }
 
-
 // listener for getting request data
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.trigger == 'get_request_data') {
@@ -184,4 +185,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         sendResponse(data);
     }
 });
+
+})();
 

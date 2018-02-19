@@ -4,19 +4,45 @@
 }
 
 
-/* settings for the ability tooltips */
-.ability-tooltip {
-	position: absolute;
-	text-align: left;
-	float: left;
-	border: solid white 1px;
+/* settings for the tooltips */
+.tooltip {
+    position: absolute;
+    border: 1px solid white;
     border-radius: 0;
-	background-color: #111;
-	width: var(--tooltip-width);
-	padding: 10px;
     font-size: 1em;
     color: #e0e0e0;
-	z-index: 301;
+    background-color: #111;
+    z-index: 301;
+}
+
+.tooltip {
+    pointer-events: auto;
+}
+
+.tooltip[stuck="1"] {
+    border-color: #3299db;
+}
+
+.ability-tooltip {
+	text-align: left;
+	float: left;
+	width: var(--tooltip-width);
+    height: auto;
+	padding: 10px;
+}
+
+.talent-tooltip { 
+    width: auto; 
+    height: auto; 
+    display: inline-block; 
+    text-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+.avatar-tooltip { 
+    width: var(--tooltip-width); 
+    height: auto; 
 }
 
 .ability-name {
@@ -62,10 +88,91 @@
     font-size: 1em;
 }
 
-.talent-tooltip { width: auto; height: auto; display: inline-block;}
-table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%; white-space: nowrap}
-.talent-left {text-align: right; border-right: 1px solid white; white-space: nowrap}
-.talent-right {text-align: left; white-space: nowrap}
+
+table.talent {font-size: 1em; white-space: nowrap; }
+.talent-left {text-align: right; border-right: 1px solid white; white-space: nowrap; }
+.talent-right {text-align: left; white-space: nowrap; }
+.talent-left[lvl="1"] {color: #d7be5b;}
+.talent-right[lvl="1"] {color: #d7be5b;}
+
+
+.avatar-tooltip hr {
+    border-top: 1px solid white;
+    margin-bottom: 0.5em;
+}
+
+
+.avatar-tooltip .name img {
+    height: 5em;
+    min-height: 5em;
+    width: auto;
+    float: left;
+    padding-right: 0.5rem;
+    margin-top: 0;
+}
+
+
+.avatar-tooltip .name {
+    font-size: 1.25em;
+    font-weight: bold;
+}
+
+
+.avatar-tooltip .ico img {
+    height: 1em;
+    min-height: 1em;
+    width: auto;
+    padding-right: 0.5em;
+}
+
+
+.avatar-tooltip .vgv_avbarct {
+    position: relative;
+    height: 1.2em;
+    background-color: #3a3a3a;
+    padding: 0;
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+
+.avatar-tooltip .vgv_avbarfg {
+    position: absolute;
+    left: 0;
+    height: 100%;
+    width: 0;
+}
+
+
+.avatar-tooltip .vgv_avbarfg[stat="hp"] { background-color: #396026; }
+.avatar-tooltip .vgv_avbarfg[stat="mana"] { background-color: #22486E; }
+
+.avatar-tooltip .vgv_avbartxt {
+    position: absolute;
+    left: 0;
+    font-weight: 200;
+    padding-left: 0.25em;
+}
+
+.avatar-tooltip .vgvavtt_clickable {
+    font-weight: bold;
+    user-select: none;
+}
+
+.avatar-tooltip .vgvavtt_clickable:hover {
+    cursor: pointer;
+}
+
+.vgvavtt-ai {
+    display: inline-block;
+    padding: 0;
+}
+
+.vgvavtt-ai img {
+    position: relative;
+    height: 3em;
+    width: auto;
+}
 
 
 /* settings for youtube player elements */
@@ -98,8 +205,7 @@ table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%; white-space: no
     width: 4.0%;
 }
 
-/* general settings for all skills */
-.ability {
+.hoverbox {
     position: absolute;
     border-style: solid;
     border-width: 1px;
@@ -186,3 +292,21 @@ table.talent {font-size: 1em; margin-left: 0%; margin-right: 0%; white-space: no
 .b-6-0 {left: 60.3%;}
 .b-6-1 {left: 63.6%;}
 .b-6-2 {left: 67.0%;}
+
+/* top-screen hero avatar hoverboxes */
+.avatar {
+    width: 3.13%;
+    height: 3.82%;
+    top: 0%;
+}
+
+.a-0 {left: 28.13%;}
+.a-1 {left: 31.48%;}
+.a-2 {left: 34.77%;}
+.a-3 {left: 38.09%;}
+.a-4 {left: 41.29%;}
+.a-5 {left: 55.62%;}
+.a-6 {left: 58.91%;}
+.a-7 {left: 62.15%;}
+.a-8 {left: 65.39%;}
+.a-9 {left: 68.75%;}

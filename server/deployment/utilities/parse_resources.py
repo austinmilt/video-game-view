@@ -997,14 +997,15 @@ def write_client_data(heroes, abilities, items, units, outfile):
     Writes a javascript file for the client to use when interpreting
     data sent from the server.
     """
-    # compile tooltip dictionary for client
+    import json
     data = {}
     for a in abilities:
         if a.has_key('ID'):
             data[a.get('ID')] = a.tooltip.to_jsstr()
         
     for hero in heroes:
-        for ability in hero.abilities.values(): 
+        data[hero.get_name().upper().replace("'", '')] = { 'icon': json.dumps(hero.icon) }
+        for ability in hero.abilities.values():
             data[ability.get('ID')] = ability.tooltip.to_jsstr()
             
     for item in items:

@@ -142,6 +142,7 @@ class JobOptions:
         self.CRED = m.get_file('gcp_credentials')
         self.REPLAY_BUCKET = m.get_string('gcp_replay_bucket')
         self.UPLOAD_NEW_REPLAYS = m.get_boolean('gcp_upload_new_replays')
+        self.FLOAT_PRECISION = m.get_int('json_float_precision')
         
         
 class ServerOptions:
@@ -154,6 +155,8 @@ class ServerOptions:
         self.SOCKET_LIMIT = m.get_int('socket_request_limit')
         self.WORKERS = m.get_int('workers')
         self.SOCKET_TIMEOUT = m.get_float('session_death_timeout')
+        self.TEMP_INTERVAL = m.get_float('temp_check_interval_seconds')
+        self.TEMP_AGE2DELETE = m.get_float('temp_age_to_delete_seconds')
   
   
 # add to this when you need a new set of options

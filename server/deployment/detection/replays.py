@@ -39,15 +39,18 @@ OPTIONS = Options.from_file()
 TIM_KWD_NEG = '-'
 
 # Hero
-HER_KWD_ABL = 'abilities'
-HER_KWD_ITM = 'items'
+HER_KWD_MAP = {}
 
 # Replay
-REP_CSV_HED_ABL = 'abilities'
-REP_CSV_HED_HER = 'hero'
-REP_CSV_HED_ITM = 'items'
 REP_CSV_HED_TIM = 'time'
+REP_CSV_HED_HER = 'hero'
 REP_CSV_DEL_ARR = ';'
+REP_CSV_DEL_LVL = ':'
+REP_CSV_DEFHANDLER = str
+REP_CSV_HANDLERS = {
+    'abilities': lambda s: [v.strip().split(REP_CSV_DEL_LVL) for v in s.strip().split(REP_CSV_DEL_ARR)],
+    'items': lambda s: s.strip().split(REP_CSV_DEL_ARR)
+}
 REP_DEM_JAR = os.path.join(OPTIONS.JB.JAR_DIR, 'process_replay.jar')
 REP_DEM_JARBASE = [r'java', '-jar', REP_DEM_JAR, None, None]
 
@@ -92,7 +95,7 @@ class Hero:
         
         # create a LinkedIntervalSet to store the time-based states for this
         #   hero
-        states = [Interval({HER_KWD_ABL: d[1], HER_KWD_ITM: d[2]}, d[0]) for d in data]
+        states = [Interval(dict((HER_KWD_MAP.get(k, k), d[1][k]) for k in d[1]), d[0]) for d in data]
         self.states = LinkedIntervalSet.from_starts(states)
         
         
@@ -168,17 +171,17 @@ class Replay:
         columns = reader.next()
         c2i = dict((columns[i], i) for i in range(len(columns)))
         data = {}
+        excluded = set([REP_CSV_HED_TIM, REP_CSV_HED_HER])
         for row in reader:
         
             # get relevant info from the line
             time = float(row[c2i[REP_CSV_HED_TIM]])
             hero = row[c2i[REP_CSV_HED_HER]]
-            abilities = row[c2i[REP_CSV_HED_ABL]].split(REP_CSV_DEL_ARR)
-            items = row[c2i[REP_CSV_HED_ITM]].split(REP_CSV_DEL_ARR)
+            other = dict((c, REP_CSV_HANDLERS.get(c, REP_CSV_DEFHANDLER)(row[c2i[c]])) for c in columns if c not in excluded)
             
             # add to the data dictionary
             if hero not in data: data[hero] = []
-            data[hero].append([time, abilities, items])
+            data[hero].append([time] + [other])
             
         return data
         

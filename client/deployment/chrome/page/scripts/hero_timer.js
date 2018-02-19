@@ -47,14 +47,17 @@ function split_abilities_talents(combined) {
 ///////////////////////////////////////////////////////////////////////////////
 // CLASSES ////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+// contains info for a given hero at a given video time
 class HeroTime {
     
-    constructor(hero, time, abilities=[], talents=[], items=[], prev=null, next=null) {
-        this.hero = hero;
+    constructor(name, time, abilities=[], talents=[], items=[], other={}, prev=null, next=null) {
+        this.name = name;
         this.time = time;
         this.abilities = abilities;
         this.talents = talents;
         this.items = items;
+        this.other = other;
         this.prev = prev;
         this.next = next;
     }
@@ -78,13 +81,79 @@ class HeroTime {
     }
     
     to_string() {
-        var output = this.hero + ' @ ' + this.time;
+        var output = this.name + ' @ ' + this.time;
         return output
     }
 }
 
 
+// contains info for multiple heroes at a given time
+class HeroTimeSet {
+    constructor(htimes=[], focus=null, prev=null, next=null) {
+        this.heroes = {};
+        this.time = null;
+        this.focus = null;
+        for (var h of htimes) { this.add(h); }
+        if (focus !== null) { this.set_focus(focus); }
+        this.prev = prev;
+        this.next = next;
+    }
+    
+    // adds a HeroTime to the set
+    add(hero) {
+        if (this.time === null) { this.time = hero.time; }
+        else if (hero.time != this.time) { throw new Error('All times in the set must match.'); }
+        else if (this.heroes.hasOwnProperty(hero.name)) { throw new Error('Cannot repeat hero names in the set.'); }
+        this.heroes[hero.name] = hero;
+    }
+    
+    
+    // gets the HeroTime with the given name (HeroTime.name)
+    get_hero(name) {
+        return this.heroes[name];
+    }
+    
+    
+    // sets the focal hero as long as it already belongs to the set
+    set_focus(name) {
+        if (!this.heroes.hasOwnProperty(name)) { throw new Error('Focus hero must already be in set.'); }
+        else { this.focus = name; }
+    }
+    
+    
+    // gets the HeroTime of the focal hero
+    get_focus() { return this.get_hero(this.focus); }
+    
+    
+    // tests if this set is earlier than another
+    is_earlier_than(other) {
+        if (this.time < other.time) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    
+    // tests if this set is later than another
+    is_later_than(other) {
+        if (this.time > other.time) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    
+    
+    // lists all the heroes in this set
+    list_heroes() { return Object.keys(this.heroes); }
+}
 
+
+
+// contains info for multiple heroes at multiple times
 class OrderedHeroTimes {
     
     // NOTE: This assumes times are provided in order (no sorting necessary)
@@ -100,6 +169,8 @@ class OrderedHeroTimes {
         }
     }
     
+    
+    // adds a new HeroTimeSet to the list
     push(time) {
     
         // add the first element
@@ -125,7 +196,19 @@ class OrderedHeroTimes {
         }
     }
     
-    get_hero(time) {
+    
+    // gets the focus HeroTime at the given time
+    get_focus(time) {
+        var cur = this.first;
+        while ((!(cur.next === null)) && (cur.next.time < time)) {
+            cur = cur.next;
+        }
+        return cur.get_focus();
+    }
+    
+    
+    // gets the HeroTimeSet at the given time
+    get_all(time) {
         var cur = this.first;
         while ((!(cur.next === null)) && (cur.next.time < time)) {
             cur = cur.next;
@@ -133,31 +216,37 @@ class OrderedHeroTimes {
         return cur;
     }
     
+    
+    // lists the names of all covered heroes
     list_heroes() {
-        var heroList = [];
+        var heroList = new Set();
         var cur = this.first;
         while (!(cur.next === null)) {
-            var curHero = cur.hero;
-            if (!heroList.includes(curHero)) {
-                heroList.push(cur.hero);
+            for (var name of cur.list_heroes()) {
+                heroList.add(name);
             }
             cur = cur.next;
         }
-        return heroList;
+        return Array.from(heroList);
     }
     
+
+    // lists the dotapedia IDs of all covered heroes
     list_ids() {
         var idSet = new Set([]);
         var cur = this.first;
         while (!(cur.next === null)) {
-            for (var elem of cur.abilities) {
-                idSet.add(elem);
-            }
-            for (elem of cur.items) {
-                idSet.add(elem);
-            }
-            for (elem of cur.talents) {
-                idSet.add(elem);
+            for (var name of cur.list_heroes()) {
+                var hero = cur.get_hero(name);
+                for (var elem of hero.abilities) {
+                    idSet.add(elem[0]); // dont add the ability level
+                }
+                for (elem of hero.items) {
+                    idSet.add(elem);
+                }
+                for (elem of hero.talents) {
+                    idSet.add(elem[0]); // dont add if the talent is picked
+                }
             }
             cur = cur.next;
         }
@@ -166,27 +255,63 @@ class OrderedHeroTimes {
     }
     
     
+    // builds from json data
     static from_json(data) {
         var time;
-        var focusName;
+        var unit;
         var abl;
-        var focusAbilities;
-        var focusTalents;
-        var focusItems;
+        var abilities;
+        var talents;
+        var items;
+        var other;
+        var heroSet;
+        var focus;
         var output = new OrderedHeroTimes();
+        
+        // loop over all the given times, making a new HeroTimeSet for each
         for (var i = 0; i < data.length; i++) {
+            
+            // make the HeroTimeSet at this given time
+            heroSet = new HeroTimeSet();
             time = parseFloat(data[i][JSON_KEY_TIME]);
-            focusName = data[i][JSON_KEY_FOCUS];
-            abl = split_abilities_talents(data[i][JSON_KEY_HEROES][focusName][JSON_KEY_HERO_ABILITIES]);
-            focusAbilities = abl[0];
-            focusTalents = abl[1];
-            focusItems = data[i][JSON_KEY_HEROES][focusName][JSON_KEY_HERO_ITEMS];
-            output.push(new HeroTime(focusName, time, focusAbilities, focusTalents, focusItems));
+            focus = data[i][JSON_KEY_FOCUS];
+            for (var name of Object.keys(data[i][JSON_KEY_HEROES])) {
+                
+                // make a new HeroTime for each hero at this time
+                unit = data[i][JSON_KEY_HEROES][name];
+                other = {};
+                for (var key of Object.keys(unit)) {
+                    
+                    // parse abilities (and talents)
+                    if (key == JSON_KEY_HERO_ABILITIES) {
+                        abl = split_abilities_talents(unit[JSON_KEY_HERO_ABILITIES]);
+                        abilities = abl[0];
+                        talents = abl[1];
+                    }
+                    
+                    // parse items
+                    else if (key == JSON_KEY_HERO_ITEMS) {
+                        items = unit[JSON_KEY_HERO_ITEMS];
+                    }
+                    
+                    // parse other attributes
+                    else {
+                        other[key] = unit[key];
+                    }
+                }
+                heroSet.add(new HeroTime(name, time, abilities, talents, items, other));
+            }
+            
+            // STOPGAP FIX, NEEDS TO BE RESOLVED AT THE SERVER
+            try { heroSet.set_focus(focus); }
+            catch (e) { heroSet.set_focus(Object.keys(heroSet.heroes)[0]); }
+            output.push(heroSet);
         }
         return output;
     }
     
     
+    // builds from a string (deprecated)
     static from_string(string) {
         var splitTimes = string.split(SEP_TIMES);
         var splitCategories;
@@ -209,19 +334,21 @@ class OrderedHeroTimes {
         return output;
     }
     
+    
+    // builds a string which can then be used to build another timer (deprecated)
     to_string() {
         var cur = this.first;
         var output = '';
         while (!(cur.next === null)) {
             output += cur.time + SEP_CATEGORIES;
-            output += cur.hero + SEP_CATEGORIES;
+            output += cur.name + SEP_CATEGORIES;
             output += cur.abilities.join(SEP_ELEMENTS) + SEP_CATEGORIES;
             output += cur.items.join(SEP_ELEMENTS);
             output += SEP_TIMES;
             cur = cur.next;
         }
         output += cur.time + SEP_CATEGORIES;
-        output += cur.hero + SEP_CATEGORIES;
+        output += cur.name + SEP_CATEGORIES;
         output += cur.abilities.join(SEP_ELEMENTS) + SEP_CATEGORIES;
         output += cur.items.join(SEP_ELEMENTS);
         return output;

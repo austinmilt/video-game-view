@@ -382,8 +382,8 @@ class JobResults:
             focusHeroName = self.job.video.query(OPTIONS.ND.KEY, vidTime)
             if self.job.valid is None: gameHeroNames = [focusHeroName]
             else: gameHeroNames = self.job.valid[OPTIONS.ND.KEY].query_time(vidTime).data
-            if len(self.job.replays) == 0: currentReplay = None
-            else: currentReplay = self.job.replays.query_time(vidTime).data
+            try: currentReplay = self.job.replays.query_time(vidTime).data
+            except AttributeError: currentReplay = None
             heroStates = {}
             for heroName in gameHeroNames:
                 heroNPCName = self.job.keys.get(heroName.lower(), None)
@@ -400,20 +400,34 @@ class JobResults:
                 # as long as we know the hero), fill in from the known keys
                 if state is None:
                     allAbilities = [self.job.keys.get(k, None) for k in self.job.keys['ability_order'].get(heroName.lower(), [])]
-                    abilities = [a for a in allAbilities[:6] if a <> EMPTY_ABILITY] # core abilities up to 6
+                    abilities = [[a, 0] for a in allAbilities[:6] if a <> EMPTY_ABILITY] # core abilities up to 6
                     abilities += allAbilities[-8:] # talents
                     items = []
                     
                 # otherwise, fill in with the known keys
                 else:
-                    abilities = [self.job.keys.get(k, None) for k in state.data['abilities']]
+                    abilities = [[self.job.keys.get(k[0], None), k[1]] for k in state.data['abilities']]
                     items = [self.job.keys.get(k, None) for k in state.data['items']]
                     
+                # remove all the None abilities after the last non-None
+                for i in xrange(len(abilities)-1, -1, -1):
+                    if abilities[i][0] is not None: break
+                    
+                abilities = abilities[:i+1]
+                
+                # same with items
+                for i in xrange(len(items)-1, -1, -1):
+                    if items[i] is not None: break
+                    
+                items = items[:i+1]
+                
+                # add to the output
                 heroStates[heroName] = { 'abilities': abilities, 'items': items }
+                heroStates[heroName].update(dict((k, state.data[k]) for k in state.data if k not in ('abilities', 'items')))
                 
             # add results at this time to the output
             self.data.append({
-                'heroes': heroStates, 'time': vidTime, 'focus': focusHeroName
+                'heroes': heroStates, 'time': vidTime, 'focus': focusHeroName, 'gtime': gameTimeSeconds
             })
             vidTime += self.job.skip
             
@@ -428,10 +442,36 @@ class JobResults:
     def as_list(self): return list(self.data)
     
     
-    def as_json_string(self):
+    @staticmethod
+    def cast(part, precision=None):
+        if type(part) is dict: return dict((JobResults.cast(k), JobResults.cast(part[k])) for k in part)
+        elif type(part) is list: return [JobResults.cast(v) for v in part]
+        elif type(part) is set: return set([JobResults.cast(v) for v in part])
+        else:
+            if precision is None: precision = OPTIONS.JB.FLOAT_PRECISION
+            fmt = '%%.%if' % precision
+            try: vFloat = float(part)
+            except (ValueError, TypeError): return part
+            try: vInt = int(part)
+            except (ValueError, TypeError): vInt = None
+            if vInt == vFloat: return '%i' % vInt
+            else: return fmt % vFloat
+                
+                
+    def as_json_string(self, precision=None):
         import json
-        return json.dumps(self.data)
-
+        return json.dumps(JobResults.cast(self.data, precision))
+    
+    
+    def as_gzipped_json_string(self, precision=None):
+        from gzip import GzipFile
+        from cStringIO import StringIO
+        file = StringIO()
+        zipper = GzipFile(fileobj=file, mode='wb')
+        zipper.write(self.as_json_string(precision))
+        zipper.close()
+        return file.getvalue()
+        
         
     
 # ########################################################################### #

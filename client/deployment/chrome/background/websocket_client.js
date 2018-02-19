@@ -67,7 +67,7 @@ var state = {
 var ports = new Set();
 
 
-// load saved results if any
+// load saved result info if any
 var requestCount = 0;
 var savedState = {};
 chrome.storage.local.get(['background_state'], function(e) {
@@ -75,9 +75,9 @@ chrome.storage.local.get(['background_state'], function(e) {
         savedState = e['background_state']; 
         if (savedState.hasOwnProperty('id_order')) {
             for (var requestID of savedState['id_order']) {
-                if (savedState[requestID]['result']) {
-                    state['id_order'].push(requestID);
+                if (savedState[requestID]['ready']) {
                     state[requestID] = savedState[requestID];
+                    state['id_order'].push(requestID);
                     state['short_id'] = requestCount + 1;
                     requestCount += 1;
                 }
@@ -104,13 +104,29 @@ function post_to_ports(message) {
 // the extension is reloaded)
 function kill_all_running_jobs() {
     for (var job of state['id_order']) {
-        if (killJobsOnUnload && !state[job]['result']) {
+        if (killJobsOnUnload && !state[job]['ready']) {
             remove_job(job);
         }
     }
 }
 chrome.runtime.onSuspend.addListener(function(){killJobsOnUnload = true; kill_all_running_jobs()});
 chrome.runtime.onSuspendCanceled.addListener(function(){killJobsOnUnload = false;})
+
+
+// function to load saved results from local storage
+function load_result(requestID, decompress=false, json=false) {
+    return new Promise(function(resolve, reject) {
+        chrome.storage.local.get([requestID], function(response) {
+            if (response[requestID] !== undefined) {
+                var result = response[requestID];
+                if (decompress) { result = pako.inflate(result, {to: 'string'}); }
+                if (json) { result = JSON.parse(result); }
+                resolve(result);
+            }
+            else { reject('Request not found.'); }
+        })
+    });
+}
 
 
 // class for opening and maintaining a (websocket) connection to the
@@ -200,11 +216,18 @@ function WebSocketClient(host) {
                 if (messageBody == '') { return; }
                 if ((messageType == TYPE_RESULT) && requestID) {
                     if (state.hasOwnProperty(requestID)) {
-                        state[requestID]['result'] = messageBody;
+                        
+                        // store in local storage for later retrieval
+                        state[requestID]['ready'] = true;
+                        var toStore = {};
+                        toStore[requestID] = pako.deflate(messageBody, {to: 'string'});
+                        chrome.storage.local.set(toStore);
                         chrome.storage.local.set({'background_state': state});
+                      
+                        // notify the popup and user that results are ready
                         msg = {
                             type: 'result', tracker: requestID,
-                            message: messageBody, message_type: messageType,
+                            message: state[requestID]['ready'], message_type: messageType,
                             url: state[requestID]['url'], title: state[requestID]['title']
                         }
                         if (alertOnResults) { 
@@ -356,6 +379,7 @@ function send_request(video, replays, title) {
         state[requestID]['url'] = request['video'];
         state[requestID]['title'] = title;
         state[requestID]['warnings'] = [];
+        state[requestID]['ready'] = false;
         post_to_ports({
             'type': 'new_tracker', 'long_id': requestID, 
             'short_id': state[requestID]['short_id'], 'title': title
@@ -391,7 +415,7 @@ function set_popup_state(newState) { state['popup'] = newState; }
 function remove_job(jobID) {
     
     // tell the server to kill this job
-    if (CLIENT && !state[jobID]['result']) {
+    if (CLIENT && !state[jobID]['ready']) {
         request = {
             'type': 'kill_job',
             'request_id': jobID
@@ -424,8 +448,104 @@ function remove_job(jobID) {
     
     // update results saved to local storage
     chrome.storage.local.set({'background_state': state});
+    chrome.storage.local.remove(String(jobID));
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+// VIEWER MANAGEMENT //////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+// general functions for injecting css and javascript with promises
+function inject_js(jsPath) {
+    return new Promise(function(resolve, reject) {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.executeScript(tabs[0].id, {file: jsPath}, function(result) {
+                var e = chrome.runtime.lastError;
+                if (e){ console.log('Javascript injection error with message: ' + e.message); }
+                resolve();
+            });
+        });
+    });
+}
+
+
+// inject css into activated tab
+function inject_css(cssPath) {
+    return new Promise(function(resolve, reject) {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.insertCSS(tabs[0].id, {file: cssPath}, function(result) {
+                var e = chrome.runtime.lastError;
+                if (e){ console.log('CSS injection error with message: ' + e.message); }
+                resolve();
+            });
+        });
+    });
+}
+
+
+// function to inject scripts into activated tab
+function inject_scripts() {
+    return new Promise(function(resolve, reject) {
+        inject_css('popup/scripts/tooltip.css')
+        .then(function(){return inject_css('page/scripts/tooltip_manager.css')})
+        .then(function(){return inject_js('page/scripts/jquery-3.2.1.min.js')})
+        .then(function(){return inject_js('background/pako.js')})
+        .then(function(){return inject_js('popup/scripts/tooltip.js')})
+        .then(function(){return inject_js('page/scripts/master.js')})
+        .then(function(){return inject_js('page/scripts/dotapedia.js')})
+        .then(function(){return inject_js('page/scripts/game_unit.js')})
+        .then(function(){return inject_js('page/scripts/hero_timer.js')})
+        .then(function(){return inject_js('page/scripts/tooltip_manager.js')})
+        .then(function(){resolve()})
+        .catch(function(error){console.log(error)});
+    });
+}
+
+
+// activate scripts
+function activate(msg) {
+    return new Promise(function(resolve, reject) {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, msg, function (response) {
+                var e = chrome.runtime.lastError;
+                if (e !== undefined){ 
+                    reject('Activation error in tab "' + tabs[0].title + '" with message: ' + e.message); 
+                }
+                else { resolve(response); }
+            }) 
+        });
+    });
+}
+
+
+// starts the program
+function start_viewer(longID) {
+    var videoURL = state[longID]['url'];
+    chrome.tabs.query({currentWindow: true, active: true}, function (tab) {
+        chrome.tabs.update(tab.id, {url: videoURL}, function(tab) {
+            var listener = function(tabId, changeInfo, tab) {
+                if ((tabId == tab.id) && (changeInfo.status == 'complete')) {
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    inject_scripts()
+                    .then(function(){return activate({trigger: 'activate_master', data: longID})})
+                    .then(function(){return activate({trigger: 'activate_tooltips'})})
+                    .then(function(v) {console.log(v)}, null)
+                    .catch(function(rejection) { console.log('Rejection:'); console.log(rejection); });
+                }
+            }
+            chrome.tabs.onUpdated.addListener(listener);
+        });
+    });
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// REQUEST LISTENERS //////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 // listen for popups to connect to the background page
 chrome.runtime.onConnect.addListener(function(port) {
@@ -444,6 +564,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         else if (msg.action == 'get_popup_state') { tell_popup_state(port); }
         else if (msg.action == 'set_popup_state') { set_popup_state(msg.state); }
         else if (msg.action == 'remove_job') { remove_job(msg.job); }
+        else if (msg.action == 'start_viewer') { start_viewer(msg.job); }
         else { post_to_port(port, {mesage: 'Background page received uknown action from popup; see background console for details.'}); console.log(msg); }
     });
     
@@ -453,4 +574,18 @@ chrome.runtime.onConnect.addListener(function(port) {
     port.onDisconnect.addListener(function() {
         ports.delete(port);
     });
+});
+
+
+// listen for content script to request results (or other stuff?)
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action == 'get_result') {
+        var reqID = request.id.toString();
+        var func = sendResponse;
+        load_result(reqID)
+            .then(function(result) { func({type: 'result', data: result})})
+            .catch(function(error) { func({type: 'error', msg: error})});
+            
+        return true;
+    }
 });

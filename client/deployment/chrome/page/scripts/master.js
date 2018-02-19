@@ -14,6 +14,9 @@
  * limitations under the License.
 */
 
+var TOOLTIPS;
+var TIMER;
+
 // creates the hero timer
 function create_hero_timer(timerData) {
     return new Promise(function(resolve, reject) {
@@ -32,13 +35,26 @@ function create_tooltip_library(heroTimes) {
 }
 
 
-// send request to server to process video and replays. Once that occurs,
-//  start video overlay in the current tab.
-function activate(data) {
-    create_hero_timer(data)
-    // timer_test()
-    .then(create_tooltip_library, null)
-    .then(function(v){console.log(v);}, null);
+
+// get the replay data and then activate tooltips etc.
+function activate(jobID) {
+    return new Promise(function(resolve, reject) {
+        chrome.runtime.sendMessage({action: 'get_result', id: jobID}, function(response) {
+            if (response.type == 'result') {
+                create_hero_timer(JSON.parse(pako.inflate(response.data, {to: 'string'})))
+                .then(function(result) {return create_tooltip_library(result)})
+                .then(resolve);
+            }
+            else if (response.type == 'error') {
+                console.log(response.msg);
+                reject(response.msg);
+            }
+            else {
+                console.log('Unable to load results!');
+                reject('Unable to load results!');
+            }
+        })
+    });
 }
 
 
@@ -57,8 +73,7 @@ function cleanup() {
 chrome.runtime.onMessage.addListener(
     function(msg, sender, sendResponse) {
         if (msg.trigger == 'activate_master') {
-            activate(msg.data);
-            sendResponse('master activating');
+            activate(msg.data).then(function() { sendResponse('master activated') });
         }
         else if (msg.trigger == 'deactivate') {
             deactivate();

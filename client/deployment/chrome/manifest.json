@@ -4,7 +4,7 @@
     "name": "Video Game View",
     "short_name": "VGV",
     "description": "Videogame hud viewer",
-    "version": "0.4.0",
+    "version": "1.0.0",
 
     "browser_action": {
         "default_icon": "popup/assets/icon.png",
@@ -20,13 +20,14 @@
     },
 
     "background": {
-        "scripts": ["background/websocket_client.js"],
+        "scripts": ["background/pako.js", "background/websocket_client.js"],
         "persistent": true
     },
 
     "permissions": [
         "activeTab",
         "storage",
+        "unlimitedStorage",
         "https://www.youtube.com/*",
         "https://www.youtu.be/*"
     ],

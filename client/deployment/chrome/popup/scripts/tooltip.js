@@ -39,58 +39,123 @@ class VGVTooltip {
         this.sticky = sticky;
         this.stuck = false;
         this.visible = false;
+        this.enabled = false;
+        this.rel = posBy;
         var tooltip = document.createElement(TT_HTMLTYPE);
         tooltip.innerHTML = html;
         tooltip.classList.add(CLASS_TT);
         if (cssClasses) { tooltip.classList.add(...cssClasses); }
-        var self = this;
-        this.display = function(event) {
-            if (!self.visible) {
-                self.visible = true;
-                if (posBy.by == 'mouse') {
-                    self._set_position_by_mouse(event);
-                }
-                else if (posBy.by == 'element') {
-                    self._set_pos_by_element(posBy.direction);
-                }
-                self._c_.appendChild(self._t_);
-            }
-        }
-        this.hide = function(event) {
-            if (self.visible) {
-                if (self.sticky && self.stuck) { return; }
-                try { self._c_.removeChild(self._t_); }
-                catch (e) {}
-                self.visible = false;
-            }
-        }
-        this.toggle_stuck = function(event) {
-            if (self.sticky) { self.stuck = !self.stuck; }
-        }
         
-        // add the tooltip listeners to display and hide
+        // set methods that depend on this
+        var self = this;
         this._t_ = tooltip;
         element._vgvtt_ = this;
         this._e_ = element;
         this._c_ = container;
-        element.addEventListener('mouseenter', this.display);
-        element.addEventListener('mouseleave', this.hide);
-        if (sticky) { element.addEventListener('click', this.toggle_stuck); }
+        this.display = function(event) { self._display(self, event); }
+        this.hide = function(event) { self._hide(self); }
+        this.toggle_display = function(event) { self._toggle_display(self, event); }
+        this.stick = function(event) { self._stick(self); }
+        this.unstick = function(event) { self._unstick(self); }
+        this.toggle_stuck = function(event) { self._toggle_stuck(self); }
+        this.enable = function() { self._enable(self); }
+        this.disable = function() { self._disable(self); }
+        this.remove = function() { self._remove(self); }
+        this.set_html = function(h, c) { self._set_html(self, h, c); }
+        this.set_htmls = function(h) { self._set_htmls(self, h); }
+        this.set_position_by_mouse = function(event) { self._set_position_by_mouse(self, event); }
+        this.set_pos_by_element = function() { self._set_pos_by_element(self, self.rel.direction); }
+        
+        // add the tooltip listeners to display and hide
+        this._e_.addEventListener('mouseenter', this.display);
+        this._e_.addEventListener('mouseleave', this.hide);
+        if (this.sticky) { this._e_.addEventListener('click', this.toggle_stuck); }
+        this.enable();
+    }
+    
+    
+    // displays the tooltip if not already displayed
+    _display(self, event) {
+        if ((!self.visible) && self.enabled) {
+            self.visible = true;
+            if (self.rel.by == 'mouse') { self.set_position_by_mouse(event); }
+            else if (self.rel.by == 'element') { self.set_pos_by_element(); }
+            self._c_.appendChild(self._t_);
+        }
+    }
+    
+    
+    // hides the tooltip if showing
+    _hide(self) {
+        if (self.visible) {
+            if (self.sticky && self.stuck) { return; }
+            try { self._c_.removeChild(self._t_); }
+            catch (e) {}
+            self.visible = false;
+        }
+    }
+    
+    
+    // toggles between showing and hiding
+    _toggle_display(self, event) {
+        if (self.visible) { self._hide(self); }
+        else { self._display(self, event); }
+    }
+    
+    
+    
+    // "sticks" the tooltip in place
+    _stick(self) {
+        if (self.sticky) {
+            self.stuck = true;
+            self._t_.setAttribute('stuck', 1);
+        }
+    }
+    
+    
+    // "unsticks" the tooltip
+    _unstick(self) {
+        if (self.sticky) {
+            self.stuck = false;
+            self._t_.setAttribute('stuck', 0);
+        }
+    }
+    
+    
+    // toggles the sticky state of the tooltip
+    _toggle_stuck(self) {
+        if (self.sticky) {
+            if (self.stuck) { self._unstick(self); }
+            else { self._stick(self); }
+        }
+    }
+    
+    
+    // allows the tooltip to be displayed
+    _enable(self) { 
+        if (!self.enabled) { self.enabled = true; }
+    }
+    
+    
+    // prevents the tooltip from being displayed
+    _disable(self) {
+        if (self.enabled) {
+            self.hide();
+            self.enabled = false;
+        }
     }
     
     
     // removes the tooltip from this element so it can be deleted
-    remove() {
-        this._e_.removeEventListener('mouseenter', this.display);
-        this._e_.removeEventListener('mouseleave', this.hide);
-        try { this._e_.removeEventListener('click', this.toggle_stuck); }
+    _remove(self) {
+        self._e_.removeEventListener('mouseenter', self.display);
+        self._e_.removeEventListener('mouseleave', self.hide);
+        try { self._e_.removeEventListener('click', self.toggle_stuck); }
         catch (e) { console.log(e); } // remove eventually
-        try { this.hide(); }
+        try { self._t_.remove(); }
         catch (e) { console.log(e); } // remove eventually
-        try { this._t_.remove(); }
-        catch (e) { console.log(e); } // remove eventually
-        this._e_ = null;
-        this._c_ = null;
+        self._e_ = null;
+        self._c_ = null;
     }
     
     
@@ -107,10 +172,10 @@ class VGVTooltip {
     
     // determines the tooltip display position based on where the user's mouse
     // is positioned in the popup
-    _set_position_by_mouse(event) {
+    _set_position_by_mouse(self, event) {
         var pos = VGVTooltip._get_mousepos_percent(event);
-        var tooltip = this._t_;
-        var cPos = this._c_.getBoundingClientRect();
+        var tooltip = self._t_;
+        var cPos = self._c_.getBoundingClientRect();
         var cpr = {
             left: 100 * cPos.left / window.innerWidth,
             right: 100 * cPos.right / window.innerWidth,
@@ -144,11 +209,11 @@ class VGVTooltip {
 
     // determines the tooltip display position based on where the element 
     // with the tooltip is
-    _set_pos_by_element(tooltip, direction='north') {
-        var tooltip = this._t_;
-        var ebox = this._e_.getBoundingClientRect();
-        var cbox = this._c_.getBoundingClientRect();
-        var tbox = this._t_.getBoundingClientRect();
+    _set_pos_by_element(self, direction='north') {
+        var tooltip = self._t_;
+        var ebox = self._e_.getBoundingClientRect();
+        var cbox = self._c_.getBoundingClientRect();
+        var tbox = self._t_.getBoundingClientRect();
         var width = cbox.width;
         var height = cbox.height;
         var exc = {
@@ -156,16 +221,16 @@ class VGVTooltip {
             right: 100*(ebox.right - cbox.right)/width,
             hmid: 100*(ebox.left + 0.5*ebox.width - cbox.left)/width,
             top: 100*(ebox.top - cbox.top)/height, 
-            bottom: 100*(ebox.bottom - cbox.bottom)/height,
+            bottom: 100*(1 - (cbox.bottom - ebox.bottom)/height),
             vmid: 100*(ebox.top + 0.5*ebox.height - cbox.top)/height,
         };
         if (direction == 'north') {
             tooltip.style.bottom = (100 - exc.top) + '%';
-            tooltip.style.left = 'calc(' + exc.hmid + '% - 0.5*var(--tooltip-width))';
+            tooltip.style.left = `calc(${exc.hmid}% - 0.5*var(--tooltip-width))`;
         }
         else if (direction == 'south') {
             tooltip.style.top = exc.bottom + '%';
-            tooltip.style.left = 'calc(' + exc.hmid + '% - 0.5*var(--tooltip-width))';
+            tooltip.style.left = `calc(${exc.hmid}% - 0.5*var(--tooltip-width))`;
         }
         else if (direction == 'east') {
             tooltip.style.bottom = (100 - exc.top) + '%';
@@ -179,7 +244,7 @@ class VGVTooltip {
     
     
     // update the html of the entire tooltip or one of its child elements
-    set_html(html, childID) {
+    _set_html(self, html, childID) {
         if (childID) {
             var child = document.getElementById(childID);
             if (!child) { throw new Error('Could not find child with id ' + childID); }
@@ -192,10 +257,10 @@ class VGVTooltip {
     
     
     // update the html of multiple children at once
-    set_htmls(htmls) {
+    _set_htmls(self, htmls) {
         var childIDs = Object.keys(htmls);
         for (var i = 0; i < childIDs.length; i++) {
-            this.set_html(htmls[childIDs[i]], childIDs[i]);
+            self.set_html(htmls[childIDs[i]], childIDs[i]);
         }
     }
 }

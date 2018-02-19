@@ -328,13 +328,16 @@ class GameUnitAbility {
     }
     
     
-    html() {
+    html(level=null) {
         var output = '';
         output += '<span class="ability-name">{0}<hr></span>'.format(this.name.html());
         output += '{0}'.format(this.description.html());
-        output += '{0}'.format(this.notes.html());
-        output += '{0}'.format(this.details.html());
-        var next = this.scepter.html();
+        var next = this.notes.html();
+        if (next != '') { output += next; }
+        if (level !== null) { output += `LEVEL: ${level}`; }
+        next = '{0}'.format(this.details.html());
+        if (next != '') { output += '<br>' + next; }
+        next = this.scepter.html();
         if (next != '') {output += '<br><span class="scepter-desc">Scepter: {0}</span>'.format(next)};
         next = this.mods.html();
         if (next != '') {output += '<br>{0}'.format(next)};
@@ -415,19 +418,17 @@ class GameUnitLibrary {
         return library;
     }
     
-    html(id) {
+    html(id, level=null) {
         if (this.units.hasOwnProperty(id)) {
-            return this.units[id].html();
+            return this.units[id].html(level);
         }
         else {
             return '';
         }
     }
     
-    html_talents(ids) {
+    html_talents(ids, levels=[]) {
         var output = '<table class="talent">';
-        
-        // var output = '<div class=\'talent\'>';
         var left;
         var right;
         var keys = [];
@@ -441,8 +442,8 @@ class GameUnitLibrary {
             if (this.units.hasOwnProperty(ids[i-1])) {
                 right = this.units[ids[i-1]].name.html();
             }
-            output += '<td class="talent-left">{0}&emsp;</td>'.format(left);
-            output += '<td class="talent-right">&emsp;{0}</td>'.format(right);
+            output += `<td class="talent-left" lvl=${levels[i]}>${left}&emsp;</td>`;
+            output += `<td class="talent-right" lvl=${levels[i-1]}>&emsp;${right}</td>`;
             output += '</tr>';
         }        
         output += '</table>';

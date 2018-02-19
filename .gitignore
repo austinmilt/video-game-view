@@ -6,7 +6,11 @@ server/test
 server/training_data
 server/deployment/java
 server/video_processing/lib
+server/replay_processing/docs
 server/*/out
 unused
 client/deployment/chrome.zip
 client/deployment/marketing
+client/icons
+clarity-analyzer
+clarity-documentation

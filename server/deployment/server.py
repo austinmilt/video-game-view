@@ -55,6 +55,7 @@ from time import time
 from utilities.options import Options
 from subprocess import CalledProcessError
 from datetime import timedelta
+from threading import Thread
 
 
 # CONSTANTS
@@ -98,6 +99,7 @@ def get_public_ip():
 PUBLIC_IP = get_public_ip()
 START = time()
 sockets = {}
+terminated = False
 
 
 # formats a dict to be converted to JSON message to send to client
@@ -399,6 +401,11 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
         # update the children of this socket
         for request in self.requests.values(): request.websocket = other
         
+    # set the compression level of messages (need to compress some due to the
+    # large size of results)
+    def get_compression_options(self):
+        return {'compression_level': 9}
+        
 
     # accept messages from the client and attempt to build a video processing
     # request/job
@@ -499,6 +506,29 @@ class RequestWebSocket(tornado.websocket.WebSocketHandler):
                 yield self.messages.task_done()
                 
             except tornado.websocket.WebSocketClosedError: break
+            
+            
+# threaded process for keeping the temporary directory clear
+def manage_temp(
+    tempDir=OPTIONS.JB.SCRATCH, intervalSeconds=OPTIONS.SV.TEMP_INTERVAL, 
+    ageToDeleteSeconds=OPTIONS.SV.TEMP_AGE2DELETE
+):
+    from time import sleep, time
+    from glob import glob
+    import os
+    lastCheck = None
+    while not terminated:
+        if (lastCheck is None) or ((time() - lastCheck) > intervalSeconds):
+            lastCheck = time()
+            files = glob(os.path.join(tempDir, '*'))
+            for f in files:
+                modifiedAge = time() - os.path.getmtime(f)
+                if modifiedAge > ageToDeleteSeconds:
+                    try: os.remove(f)
+                    except: log.warn('Could not remove old temporary file %s' % f)
+                
+        sleep(1)
+    
         
         
 if __name__ == "__main__":
@@ -526,6 +556,15 @@ if __name__ == "__main__":
         tornado.ioloop.IOLoop.current().add_callback(QUEUE.consume)
         log.info('Started worker %i' % i)
         
+        
+    # start a thread to monitor and manage the temporary directory
+    # (to handle deleting files that were not deleted by their processes)
+    tempManager = Thread(target=manage_temp)
+    tempManager.start()
+        
     # start the server
     log.info('Starting server')
-    tornado.ioloop.IOLoop.current().start()
+    try: tornado.ioloop.IOLoop.current().start()
+    except KeyboardInterrupt as e: 
+        terminated = True
+        raise e

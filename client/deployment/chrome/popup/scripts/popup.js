@@ -17,17 +17,20 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // TO-DO //////////////////////////////////////////////////////////////////////
-// o hide playback controls in the normal way (i.e. when not hovered)
+// X pull gold/xp/kda/cs info from CDOTA_DataRadiant/CDOTA_DataDire (see https://github.com/skadistats/clarity/issues/91)
+// X move script injection and activation to the background page so users can click link and close popup
+// X tooltips for hero avatars (FEB 6)
+// X add "experimental feature" warning
+// o update github readme
 // o user can rename video results link (e.g. "My pooper scooper")
-// o tooltips displaying when nothing on the screen
-// o client clicking on link throws problem with the hero_timer
-// o server do a better job of clearing temp files
-// o function to stop tooltips
-// o menu to stop tooltips
-// o sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
-// o prevent multiple injections of content scripts
+// X server do a better job of clearing temp files
 // o morphling tooltips are off positioned. True for all 6-slotted heroes (nope, just him)?
-// o move options page to popup instead of opening in extensions
+// X sticky tooltips not working
+// X hide playback controls in the normal way (i.e. when not hovered)
+// X client clicking on link throws problem with the hero_timer
+// X sometimes when user tries to load results some scripts return before ready and causes subsequent calls to fail
+// X often not able to open/close talent/ability/item avatar tooltips (seems like they are being orphaned by updates)
+// X why dont eventlisteners for tooltips inside tooltips get registered or stay?
 // X some clients being logged out (websocket closes) when popup closes(?) dunno why
 // X user disconnecting from server and then reconnecting doesnt work
 // X if client has already started viewing video results, trying to process the current video again throws an "invalid description" error
@@ -51,10 +54,6 @@
 //     This way you can allow content creators or users to specify match start 
 //     times when a replay isnt available
 //////////////////////////////////////////////////////////////////////////////
-
-var started = false;
-var TIMER;
-var TOOLTIPS;
 
 const CONN_CONNECTED = 'connected';
 const CONN_DISCONNECTED = 'disconnected';
@@ -142,7 +141,7 @@ function open_correct_page(data) {
         open_tracker();
     }
     else {
-        alert('Unsure which page to open. Opening menu.');
+        console.log('Unsure which page to open. Opening menu.');
         open_menu();
     }
 }
@@ -201,7 +200,7 @@ function menu_options() {
 
 // navigate to github and/or bug/forum/requests
 function menu_forum() {
-    window.open('https://groups.google.com/forum/#!forum/video-game-view', '_blank');
+    window.open('https://github.com/austinmilt/video-game-view', '_blank');
 }
 
 
@@ -281,7 +280,7 @@ function parse_replay_start(time) {
         sec = tsplit[2];
     }
     else {
-        alert('Invalid replay start time in video description.');
+        console.log('Invalid replay start time in video description.');
     }
     
     // check that parts of the time are integer
@@ -371,15 +370,15 @@ function make_request() {
     return new Promise(function(resolve, reject) {
         
         // get the request data for sending to the background page
-        inject_js('popup/scripts/get_request_data.js')
-            .then(function() {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.executeScript(tabs[0].id, {file: 'popup/scripts/get_request_data.js'}, function(result) {
+                var e = chrome.runtime.lastError;
+                if (e){ console.log('Javascript injection error with message: ' + e.message); }
                 chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                     chrome.tabs.sendMessage(tabs[0].id, {trigger: 'get_request_data'}, function(response) {
                         var e = chrome.runtime.lastError;
-                        if (e){ alert('Failed to query request script with error: ' + e.message); }
-                        if (response['type'] == 'error') {
-                            alert(response['message']);
-                        }
+                        if (e !== undefined){ console.log('Failed to query request script with error: ' + e.message); }
+                        if (response['type'] == 'error') { console.log(response['message']); }
                         else if (response['type'] == 'result') {
                             
                             // if some replay info is missing, prompt the user
@@ -404,11 +403,12 @@ function make_request() {
                         else {
                             alert('Issue getting request data. Inform the developer.');
                         }
+                        resolve();
                     });
                 });
-            })
-            .then(function(){resolve()})
-            .catch(function(rejection){ alert(rejection) });
+            });
+        });
+                
     });
 }
 
@@ -440,38 +440,42 @@ function update_connection_dependents() {
     if (popupPage == POPUP_STATE_TRACK) {
         var disconnectButton = document.getElementById(HTML_TD);
         var requestButton = document.getElementById(HTML_REQUEST);
-        if (connection == CONN_CONNECTED) {
-            requestButton.setAttribute('enabled', true);
-            disconnectButton.innerText = 'Go Offline';
-            disconnectButton.removeEventListener('click', connect);
-            disconnectButton.addEventListener('click', user_disconnect);
-            disconnectButton.setAttribute('enabled', true);
+        if (disconnectButton && requestButton) {
+            if (connection == CONN_CONNECTED) {
+                requestButton.setAttribute('enabled', true);
+                disconnectButton.innerText = 'Go Offline';
+                disconnectButton.removeEventListener('click', connect);
+                disconnectButton.addEventListener('click', user_disconnect);
+                disconnectButton.setAttribute('enabled', true);
+            }
+            else if (connection == CONN_CONNECTING) {
+                requestButton.setAttribute('enabled', false);
+                disconnectButton.innerText = 'Connecting';
+                disconnectButton.removeEventListener('click', user_disconnect);
+                disconnectButton.removeEventListener('click', connect);
+                disconnectButton.setAttribute('enabled', false);
+            }
+            else if (connection == CONN_DISCONNECTED) {
+                requestButton.setAttribute('enabled', false);
+                disconnectButton.innerText = 'Go Online';
+                disconnectButton.removeEventListener('click', user_disconnect);
+                disconnectButton.addEventListener('click', connect);
+                disconnectButton.setAttribute('enabled', true);
+            }
+            else { console.log(connection); }
         }
-        else if (connection == CONN_CONNECTING) {
-            requestButton.setAttribute('enabled', false);
-            disconnectButton.innerText = 'Connecting';
-            disconnectButton.removeEventListener('click', user_disconnect);
-            disconnectButton.removeEventListener('click', connect);
-            disconnectButton.setAttribute('enabled', false);
-        }
-        else if (connection == CONN_DISCONNECTED) {
-            requestButton.setAttribute('enabled', false);
-            disconnectButton.innerText = 'Go Online';
-            disconnectButton.removeEventListener('click', user_disconnect);
-            disconnectButton.addEventListener('click', connect);
-            disconnectButton.setAttribute('enabled', true);
-        }
-        else { alert(connection); }
     }
     
     
     // on the main menu, just change the Start/Resume
     else if (popupPage == POPUP_STATE_MENU) {
         var startButton = document.getElementById(HTML_START);
-        if (connection == CONN_CONNECTED) { startButton.innerHTML = 'Resume'; }
-        else if (connection == CONN_CONNECTING) { startButton.innerHTML = 'Resume'; }
-        else if (connection == CONN_DISCONNECTED) { startButton.innerHTML = 'Start'; }
-        else { alert(connection); }
+        if (startButton) {
+            if (connection == CONN_CONNECTED) { startButton.innerHTML = 'Resume'; }
+            else if (connection == CONN_CONNECTING) { startButton.innerHTML = 'Resume'; }
+            else if (connection == CONN_DISCONNECTED) { startButton.innerHTML = 'Start'; }
+            else { console.log(connection); }
+        }
     }
 }
 
@@ -489,10 +493,10 @@ function refresh_all(backgroundState) {
             key, backgroundState[key]['short_id'], 
             backgroundState[key]['title'], backgroundState[key]['warnings']
         );
-        if (backgroundState[key]['result']) { 
+        if (backgroundState[key]['ready']) { 
             activate_result(
-                key, backgroundState[key]['result'], 
-                backgroundState[key]['url'], backgroundState[key]['title']
+                key, backgroundState[key]['url'], 
+                backgroundState[key]['title']
             ); 
         }
         else {
@@ -669,22 +673,14 @@ function set_status_led() {
 
 // give user a clickable link to view the current results
 // in the current tab
-function activate_result(longID, result, videoURL, videoTitle) {
+function activate_result(longID, videoURL, videoTitle) {
     if (popupPage == POPUP_STATE_TRACK) {
         var tracker = document.getElementById(longID);
         tracker.tooltip.remove();
         tracker.innerText = 'Ready. View ' + videoTitle;
         tracker.classList.add(...MESSAGE_CLASS[TYPE_RESULT]);
         tracker.addEventListener("click", function(e){
-            chrome.tabs.update({url: videoURL}, function(tab) {
-                var listener = function(tabId, changeInfo, tab) {
-                    if (tabId == tab.id && changeInfo.status === 'complete') {
-                        chrome.tabs.onUpdated.removeListener(listener);
-                        start_viewer(JSON.parse(result));
-                    }
-                }
-                chrome.tabs.onUpdated.addListener(listener);
-            });
+            port.postMessage({'action': 'start_viewer', 'job': longID});
         }, false);
     }
 }
@@ -756,7 +752,7 @@ port.onMessage.addListener(function(msg) {
     }
     
     else if (msg.type == 'result') {
-        activate_result(msg.tracker, msg.message, msg.url, msg.title);
+        activate_result(msg.tracker, msg.url, msg.title);
     }
     
     else if (msg.type == 'remove_tracker') {
@@ -770,85 +766,3 @@ port.onMessage.addListener(function(msg) {
     else { console.log(msg); }
 });
 
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// VIEWER MANAGEMENT //////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-// general functions for injecting css and javascript with promises
-function inject_js(jsPath) {
-    return new Promise(function(resolve, reject) {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.executeScript(tabs[0].id, {file: jsPath}, function(result) {
-                var e = chrome.runtime.lastError;
-                if (e){ alert('Javascript injection error with message: ' + e.message); }
-                resolve();
-            });
-        });
-    });
-}
-
-
-// inject css into activated tab
-function inject_css(cssPath) {
-    return new Promise(function(resolve, reject) {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.insertCSS(tabs[0].id, {file: cssPath}, function(result) {
-                var e = chrome.runtime.lastError;
-                if (e){ alert('CSS injection error with message: ' + e.message); }
-                resolve();
-            });
-        });
-    });
-}
-
-
-// function to inject scripts into activated tab
-function inject_scripts() {
-    return new Promise(function(resolve, reject) {
-        inject_css('popup/scripts/tooltip.css')
-        .then(function(){inject_css('page/scripts/tooltip_manager.css');})
-        .then(function(){inject_js('page/scripts/jquery-3.2.1.min.js');})
-        .then(function(){inject_js('page/scripts/jquery-ui.js');})
-        .then(function(){inject_js('page/scripts/master.js');})
-        .then(function(){inject_js('page/scripts/dotapedia.js');})
-        .then(function(){inject_js('page/scripts/hero_timer.js');})
-        .then(function(){inject_js('page/scripts/game_unit.js');})
-        .then(function(){inject_js('popup/scripts/tooltip.js');})
-        .then(function(){inject_js('page/scripts/tooltip_manager.js')})
-        .then(function(){resolve();});
-    });
-}
-
-
-// activate scripts
-function activate(msg) {
-    return new Promise(function(resolve, reject) {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, msg, function (response) {
-                var e = chrome.runtime.lastError;
-                if (e){ alert('Activation error with mesage: ' + e.message); }
-                resolve();
-            }) 
-        })
-    });
-}
-
-
-// starts the program
-function start_viewer(data) {
-    if (!started) {
-        started = true;
-        port.postMessage({action: 'set_viewer_state', started: true});
-        inject_scripts()
-            .then(function(){activate({trigger: 'activate_master', data: data})})
-            .then(function(){activate({trigger: 'activate_tooltips'})})
-            .then(function(v) {console.log(v)}, null);
-    }   
-}
-
-
-// stops the program and clears changes
