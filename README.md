@@ -4,7 +4,8 @@ This repository contains both the server and client code for Video Game View (VG
 
 
 ## But what does it do?
-TBD
+The VGV workflow is as follows:
+
 
 
 ## Supported Platforms
@@ -15,7 +16,7 @@ TBD
 * youtube.com
 
 ### Games (client and server)
-* dota 2 7.07
+* dota 2 7.09
 
 
 ## Getting Started

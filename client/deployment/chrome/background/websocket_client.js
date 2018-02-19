@@ -491,7 +491,7 @@ function inject_scripts() {
     return new Promise(function(resolve, reject) {
         inject_css('popup/scripts/tooltip.css')
         .then(function(){return inject_css('page/scripts/tooltip_manager.css')})
-        .then(function(){return inject_js('page/scripts/jquery-3.2.1.min.js')})
+        .then(function(){return inject_js('popup/scripts/jquery-3.2.1.min.js')})
         .then(function(){return inject_js('background/pako.js')})
         .then(function(){return inject_js('popup/scripts/tooltip.js')})
         .then(function(){return inject_js('page/scripts/master.js')})
