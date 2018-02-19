@@ -50,6 +50,7 @@ chrome.storage.sync.get(['connect_attempts', 'frame_interval'], function(e) {
 chrome.storage.onChanged.addListener(function(changes, namespace) {
     if (namespace == 'sync') {
         for (key in changes) {
+            console.log(`${key}: ${changes[key].newValue}`);
             if (key == 'connect_attempts') { connectAttemptsMax = changes[key].newValue; }
             else if (key == 'frame_interval') { frameInterval = changes[key].newValue; }
             else if (key == 'alert_results') { alertOnResults = changes[key].newValue; }

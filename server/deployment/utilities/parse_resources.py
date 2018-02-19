@@ -783,7 +783,8 @@ class Tooltip:
         
         CAUTION: Highly Experimental
         """
-        return self.to_pystr().replace('u"', '"').replace("u'", "'")
+        import json
+        return json.dumps(dict((k, self.__dict__[k]) for k in self._keys))
         
         
         
