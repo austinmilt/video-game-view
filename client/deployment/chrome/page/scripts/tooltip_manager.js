@@ -1038,7 +1038,9 @@ function update() {
         for (var name of heroes.list_heroes()) {
             var hero = heroes.get_hero(name);
             var box = boxes['avatars'][parseInt(hero.other.order)];
-            box.update(name);
+            if (box !== undefined) {
+                box.update(name);
+            }
         }
     }    
     catch (e) {

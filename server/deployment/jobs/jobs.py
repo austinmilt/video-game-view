@@ -401,7 +401,7 @@ class JobResults:
                 if state is None:
                     allAbilities = [self.job.keys.get(k, None) for k in self.job.keys['ability_order'].get(heroName.lower(), [])]
                     abilities = [[a, 0] for a in allAbilities[:6] if a <> EMPTY_ABILITY] # core abilities up to 6
-                    abilities += allAbilities[-8:] # talents
+                    abilities += [[a, 0] for a in allAbilities[-8:]] # talents
                     items = []
                     
                 # otherwise, fill in with the known keys
@@ -423,7 +423,8 @@ class JobResults:
                 
                 # add to the output
                 heroStates[heroName] = { 'abilities': abilities, 'items': items }
-                heroStates[heroName].update(dict((k, state.data[k]) for k in state.data if k not in ('abilities', 'items')))
+                if state is not None:
+                    heroStates[heroName].update(dict((k, state.data[k]) for k in state.data if k not in ('abilities', 'items')))
                 
             # add results at this time to the output
             self.data.append({
