@@ -1,8 +1,9 @@
-# Video Game View ![alt text](https://storage.googleapis.com/vgv-marketing/icon.png "VGV Logo"){:style="float:left;"}
+# <img align="left" width="100" height="100" src="http://www.fillmurray.com/100/100"> Video Game View
+
 
 This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See a screenshot of the client being used below.
 
-![alt text](https://storage.googleapis.com/vgv-marketing/screenshot2.png "Example Screenshot One")
+![Example Screenshot 1](https://storage.googleapis.com/vgv-marketing/screenshot2.png "Example Screenshot 1")
 
 ## Contents
 [Getting Started](#getting-started)  
@@ -35,7 +36,7 @@ For those who want to use the client, you can download it as a Google Chrome ext
 #### Minimum Requirements
 VGV has few requirements to enable the successful processing of your Youtube Dota 2 videos. At minimum, you must record your videos with at least 480p resolution and do not use any HUD skins that will obscure any part of the hero name or the game clock (see below). In addition, the replay slider at the bottom of the screen must be collapsed. If it is showing, the hero name will be pushed up the screen and VGV will not be able to detect the hero name.
 
-![alt text](https://storage.googleapis.com/vgv-marketing/content_creators_1.png "Video recording requirements")
+![Video recording requirements image](https://storage.googleapis.com/vgv-marketing/content_creators_1.png "Video recording requirements")
 
 #### Additional Information (HIGHLY recommended)
 In addition to the minimum requirements when recording your videos, you can greatly enrich the HUD data displayed to users by including replay file information in your video description. There are two ways of specifying replay information in your video description:
