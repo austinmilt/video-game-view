@@ -32,7 +32,7 @@ The VGV workflow is as follows:
 15. Current tab is relocated to the video request URL.
 16. Content scripts are injected to the Youtube page.
 17. [Viewer manager](client/deployment/chrome/page/scripts/master.js) (within the Youtube page) requests results data from the client and uses these to create a time-ordered reference of tooltip information (see various in [page scripts](client/deployment/chrome/page/scripts)) referenced during video playback.
-18. [Tooltip manager](client/deployment/chrome/page/scripts/tooltip_manager.js) queries the video time at regular intervals, creating and updating and HTML overlay (the HUD) on the video, parts of which the user can hover to display detailed HUD information about the match.
+18. [Tooltip manager](client/deployment/chrome/page/scripts/tooltip_manager.js) queries the video time at regular intervals, creating and updating an HTML overlay (the HUD) on the video, parts of which the user can hover to display detailed HUD information about the match.
 
 ## Supported Platforms
 ### Browsers (client)
