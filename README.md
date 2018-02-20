@@ -1,13 +1,36 @@
 # Video Game View
 
-This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video.
+This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See an screenshot of the client being used below.
 
-## TOC
-[Workflow](#but-what-does-it-do?)  
+![alt text](https://www.dropbox.com/s/1rjrpwlxyy34o55/screenshot2.png?dl=1 "Example Screenshot One")
+
+## Contents
+[Getting Started](#getting-started)  
 [Supported Platforms](#supported-platforms)  
-[Getting Started (Users)](#getting-started)  
-[Getting Started (Youtube Content Creators)](#getting-started)  
-[Getting Started (Contributors)](#getting-started)  
+[Workflow](#but-what-does-it-do?)  
+[Authors](#authors)
+[License](#license)
+
+## Supported Platforms
+### Browsers (client)
+* Google Chrome
+
+### Sites (client)
+* youtube.com
+
+### Games (client and server)
+* dota 2 7.09
+
+
+## Getting Started
+### Users
+For those who want to use the client, you can download it as a Google Chrome extension (link TBD)
+
+### Content Creators (Youtube)
+
+
+### Contributors
+If you wish to contribute code to the project, please contact the [original author](#authors) first or open an "issue" here on github.
 
 ## But what does it do?
 The VGV workflow is as follows:
@@ -39,21 +62,6 @@ The VGV workflow is as follows:
 16. Content scripts are injected to the Youtube page.
 17. [Viewer manager](client/deployment/chrome/page/scripts/master.js) (within the Youtube page) requests results data from the client and uses these to create a time-ordered reference of tooltip information (see various in [page scripts](client/deployment/chrome/page/scripts)) referenced during video playback.
 18. [Tooltip manager](client/deployment/chrome/page/scripts/tooltip_manager.js) queries the video time at regular intervals, creating and updating an HTML overlay (the HUD) on the video, parts of which the user can hover to display detailed HUD information about the match.
-
-## Supported Platforms
-### Browsers (client)
-* Google Chrome
-
-### Sites (client)
-* youtube.com
-
-### Games (client and server)
-* dota 2 7.09
-
-
-## Getting Started
-
-For those who want to use the client, you can download it as a [Google Chrome extension](www.videogameview.com)
 
 
 ## Authors
