@@ -5,9 +5,19 @@ This repository contains both the server and client code for Video Game View (VG
 
 ## But what does it do?
 The VGV workflow is as follows:
-1. Stuff
-2. More stuff
-2. Even more stuff
+
+### Request Submission (Client)
+1. User opens the video page (currently only Youtube) of the video to be processed.
+2. User opens the VGV extension (currently only Chrome).
+3. The extension establishes an HTML websocket connection to the server. Connection is maintained by regular pings and may reconnect without losing running jobs if connection is terminated and then re-established within a time limit.
+4. User uses client to submit video on the current tab for processing. If the video is missing some information that can help in processing (currently dota replay file links) then user is prompted to submit this information himself.
+5. Client sends video url and any additional information to the server.
+
+### Job Creation (Server)
+6. Server (python tornado server) listens for websocket connections. Established websockets send JSON requests through their websocket. When a request is received, it is tested for validity and used to spawn a job that is added to a FIFO queue.
+7. When the user's job comes up in the queue, it spawns a python subprocess that is monitored for completion by the server.
+
+### 
 
 
 ## Supported Platforms
