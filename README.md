@@ -1,4 +1,4 @@
-# Video Game View ![alt text](https://storage.googleapis.com/vgv-marketing/icon.png "VGV Logo")
+# Video Game View ![alt text](https://storage.googleapis.com/vgv-marketing/icon.png "VGV Logo"){:style="float:left;"}
 
 This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See a screenshot of the client being used below.
 
