@@ -2,6 +2,12 @@
 
 This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video.
 
+## TOC
+[Workflow](#but-what-does-it-do?)
+[Supported Platforms](#supported-platforms)
+[Getting Started (Users)](#getting-started)
+[Getting Started (Youtube Content Creators)](#getting-started)
+[Getting Started (Contributors)](#getting-started)
 
 ## But what does it do?
 The VGV workflow is as follows:
@@ -48,16 +54,6 @@ The VGV workflow is as follows:
 ## Getting Started
 
 For those who want to use the client, you can download it as a [Google Chrome extension](www.videogameview.com)
-
-MORE TBD
-
-
-## More on the Client
-TBD
-
-
-## More on the Server
-TBD
 
 
 ## Authors
