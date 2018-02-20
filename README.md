@@ -5,7 +5,9 @@ This repository contains both the server and client code for Video Game View (VG
 
 ## But what does it do?
 The VGV workflow is as follows:
-
+1. Stuff
+2. More stuff
+2. Even more stuff
 
 
 ## Supported Platforms
