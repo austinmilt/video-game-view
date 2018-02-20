@@ -8,8 +8,8 @@ The VGV workflow is as follows:
 
 ### Request Submission ([Client](client/deployment/chrome))
 1. User opens the video page (currently only Youtube) of the video to be processed.
-2. User opens the [VGV extension](client\deployment\chrome\popup\scripts\popup.js) (currently only Chrome).
-3. The [extension](client\deployment\chrome\background\websocket_client.js) establishes an HTML websocket connection to the server. Connection is maintained by regular pings and may reconnect without losing running jobs if connection is terminated and then re-established within a time limit.
+2. User opens the [VGV extension](client\deployment\chrome\popup\scripts) (currently only Chrome).
+3. The [extension](client\deployment\chrome\background) establishes an HTML websocket connection to the server. Connection is maintained by regular pings and may reconnect without losing running jobs if connection is terminated and then re-established within a time limit.
 4. User uses client to submit video on the current tab for processing. If the video is missing some information that can help in processing (currently dota replay file links) then user is prompted to submit this information himself.
 5. Client sends video url and any additional information to the server.
 
