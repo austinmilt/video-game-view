@@ -1,6 +1,6 @@
-# Video Game View
+# Video Game View ![alt text](https://storage.googleapis.com/vgv-marketing/icon.png "VGV Logo")
 
-This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See an screenshot of the client being used below.
+This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See a screenshot of the client being used below.
 
 ![alt text](https://storage.googleapis.com/vgv-marketing/screenshot2.png "Example Screenshot One")
 
@@ -10,6 +10,9 @@ This repository contains both the server and client code for Video Game View (VG
 [Workflow](#but-what-does-it-do?)  
 [Authors](#authors)
 [License](#license)
+
+
+
 
 ## Supported Platforms
 ### Browsers (client)
@@ -22,15 +25,52 @@ This repository contains both the server and client code for Video Game View (VG
 * dota 2 7.09
 
 
+
+
 ## Getting Started
 ### Users
 For those who want to use the client, you can download it as a Google Chrome extension (link TBD)
 
 ### Content Creators (Youtube)
+### Minimum Requirements
+VGV has few requirements to enable the successful processing of your Youtube Dota 2 videos. At minimum, you must record your videos with at least 480p resolution and do not use any HUD skins that will obscure any part of the hero name or the game clock (see below). In addition, the replay slider at the bottom of the screen must be collapsed. If it is showing, the hero name will be pushed up the screen and VGV will not be able to detect the hero name.
 
+![alt text](https://storage.googleapis.com/vgv-marketing/content_creators_1.png "Video recording requirements")
+
+### Additional Information (HIGHLY recommended)
+In addition to the minimum requirements when recording your videos, you can greatly enrich the HUD data displayed to users by including replay file information in your video description. There are two ways of specifying replay information in your video description:
+
+1. (HIGHLY preferred over option 2) by giving hyperlinks to replay .dem's, e.g. (or see [this](https://www.youtube.com/watch?v=qG8JpKFPNdE))
+   ```
+   @videogameview
+   0:00 https://mydatabase.com/replays/3674717392.dem
+   4:22 https://mydatabase.com/replays/3674237392.bzip2
+   @videogameview
+   ```
+   
+2. by giving match IDs
+   ```
+   @videogameview
+   0:00 2474717392
+   3:33 3555717392
+   10:19 3674717121
+   @videogameview
+   ```
+
+When you provide this additional information, make sure to follow these rules:
+* Replay information in your video description must be surrounded by the @videogameview tags as shown in the above examples.
+* Replay dems must either be uncompressed (i.e. a .dem file) or compressed using bzip2 (as when downloaded from the Valve replay database).
+* Each replay specification is composed of the start time of the match in the video followed by a space and then the match ID or replay file link.
+* Replay start times should be formatted as they appear in the Youtube video player, e.g. 5:55.
+
+####Why should I supply my own replay files?
+Option 2 of supplying replay information relies on the replays to be available on the Valve replay database. In general, replays are only kept for ~10 days. VGV also has a replay database that will (at the time of writing) keep replays that have been previously requested by clients for up to 90 days, though this is subject to change at any time. So, if you want users of VGV to be able to get enriched HUD information far into the future, the ONLY option is to have the replay files hosted somewhere semi-permanently, such as a personal website or one of the website services that analyze replays.
 
 ### Contributors
 If you wish to contribute code to the project, please contact the [original author](#authors) first or open an "issue" here on github.
+
+
+
 
 ## But what does it do?
 The VGV workflow is as follows:
@@ -64,9 +104,14 @@ The VGV workflow is as follows:
 18. [Tooltip manager](client/deployment/chrome/page/scripts/tooltip_manager.js) queries the video time at regular intervals, creating and updating an HTML overlay (the HUD) on the video, parts of which the user can hover to display detailed HUD information about the match.
 
 
+
+
 ## Authors
 
 * **Austin Milt** - *Initial work* - [github](https://github.com/austinmilt)
+
+
+
 
 ## License
 
