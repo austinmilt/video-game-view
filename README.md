@@ -1,7 +1,7 @@
 # <img align="left" width="100" height="100" src="https://storage.googleapis.com/vgv-marketing/icon.png"> Video Game View
 
 
-This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See a screenshot of the client being used below.
+This repository contains both the server and client code for Video Game View (VGV). The primary purpose of VGV is to provide detailed game information on recorded videos (i.e. that have lost HUD information due to recording). The client (a chrome extension) provides an interface for users to request videos to be processed for match information and to interact with the results of that process. The server processes videos requested by the client and sends necessary data back for the client to recreate a HUD on the video. See a screenshot of the client being used below or [a short promo video](https://www.youtube.com/watch?v=vosreYAUUug).
 
 ![Example Screenshot 1](https://storage.googleapis.com/vgv-marketing/screenshot2.png "Example Screenshot 1")
 
@@ -9,7 +9,7 @@ This repository contains both the server and client code for Video Game View (VG
 [Getting Started](#getting-started)  
 [Supported Platforms](#supported-platforms)  
 [Workflow](#but-what-does-it-do?)  
-[Authors](#authors)
+[Authors](#authors)  
 [License](#license)
 
 
@@ -110,8 +110,6 @@ The VGV workflow is as follows:
 ## Authors
 
 * **Austin Milt** - *Initial work* - [github](https://github.com/austinmilt)
-
-
 
 
 ## License
