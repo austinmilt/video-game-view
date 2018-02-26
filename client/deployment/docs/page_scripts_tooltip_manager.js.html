@@ -1,4 +1,32 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: page/scripts/tooltip_manager.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: page/scripts/tooltip_manager.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,17 +166,17 @@ function initialize_boxes() {
     boxes['focus'] = {};
     boxes['focus']['talents'] = new TalentBox(6, null, [], [], vgvContainer);
     boxes['focus']['abilities'] = [];
-    for (var i = 0; i < 6; i++) {
+    for (var i = 0; i &lt; 6; i++) {
         boxes['focus']['abilities'].push(new AbilityBox(i, 6, null, [], vgvContainer));
     }
     boxes['focus']['items'] = [];
-    for (var i = 0; i < 9; i++) {
+    for (var i = 0; i &lt; 9; i++) {
         boxes['focus']['items'].push(new ItemBox(i, 6, null, vgvContainer));
     }
     
     // build hero avatar boxes
     boxes['avatars'] = [];
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i &lt; 10; i++) {
         boxes['avatars'].push(new AvatarBox(i, vgvContainer));
         // boxes['avatars'][i].element.addEventListener('click', function(event) {console.log(TIMER)});
     }
@@ -438,7 +466,7 @@ class TalentBox extends HoverBox {
         if (this.tooltip.visible || force) {
             var changed = (this.hero != hero);
             if (!changed) {
-                for (var i = 0; i < 8; i++) {
+                for (var i = 0; i &lt; 8; i++) {
                     if (levels[i] != this.levels[i]) {
                         changed = true;
                         break;
@@ -658,7 +686,7 @@ class HeroATE extends AvatarTooltipElement {
         var heroInfo = DOTAPEDIA[heroKey];
         if (heroInfo !== undefined) {
             var icon = heroInfo['icon'];
-            html += `<img src=${icon}>`;
+            html += `&lt;img src=${icon}>`;
         }
         html += ` ${value}`;
         
@@ -666,9 +694,9 @@ class HeroATE extends AvatarTooltipElement {
         warn += "It is impossible to fully reproduce the match information ";
         warn += "at every second of the video due to limits in how accurate ";
         warn += "VGV can be at analyzing videos and combining with replay information.";
-        html += ` <b title="${warn}" style="color:#d7be5b;cursor:help;text">( ! )</b>`;
+        html += ` &lt;b title="${warn}" style="color:#d7be5b;cursor:help;text">( ! )&lt;/b>`;
         
-        html += '<hr>';
+        html += '&lt;hr>';
         return html; 
     }
 }
@@ -706,7 +734,7 @@ class SpeedATE extends AvatarTooltipElement {
      * @param {int} value - hero's movement speed
      * @return {string} HTML of hero's movement speed
      */
-    handler(value) { return `<img src=${ICON_SPD}>${value} (BASE)`; }
+    handler(value) { return `&lt;img src=${ICON_SPD}>${value} (BASE)`; }
 }
 
 
@@ -827,7 +855,7 @@ class StrengthATE extends AvatarTooltipElement {
         var base = Math.round(value[0]);
         var total = Math.round(value[1]);
         var bonus = total - base;
-        return `<img src="${ICON_STR}">${base} + ${bonus}`;
+        return `&lt;img src="${ICON_STR}">${base} + ${bonus}`;
     }
 }
 
@@ -842,7 +870,7 @@ class AgilityATE extends AvatarTooltipElement {
     constructor() { super('agi', [0., 0.], ['ico']); }
     
     /** @see AvatarTooltipElement */
-    check_update(value) { return ((this.value[0] != value[0]) && (this.value[1] != value[1])); }
+    check_update(value) { return ((this.value[0] != value[0]) &amp;&amp; (this.value[1] != value[1])); }
     
     /**
      * Gets the display HTML for this element.
@@ -853,7 +881,7 @@ class AgilityATE extends AvatarTooltipElement {
         var base = Math.round(value[0]);
         var total = Math.round(value[1]);
         var bonus = total - base;
-        return `<img src="${ICON_AGI}">${base} + ${bonus}`;
+        return `&lt;img src="${ICON_AGI}">${base} + ${bonus}`;
     }
 }
 
@@ -879,7 +907,7 @@ class IntelligenceATE extends AvatarTooltipElement {
         var base = Math.round(value[0]);
         var total = Math.round(value[1]);
         var bonus = total - base;
-        return `<img src="${ICON_INT}">${base} + ${bonus}`;
+        return `&lt;img src="${ICON_INT}">${base} + ${bonus}`;
     }
 }
 
@@ -905,7 +933,7 @@ class DamageATE extends AvatarTooltipElement {
         var min = value[0];
         var max = value[1];
         var bonus = value[2];
-        return `<img src="${ICON_DMG}">[${min}-${max}] + ${bonus}`;
+        return `&lt;img src="${ICON_DMG}">[${min}-${max}] + ${bonus}`;
     }
 }
 
@@ -934,7 +962,7 @@ class HealthATE extends AvatarTooltipElement {
         var regen = value[2];
         cur = Math.round(cur);
         max = Math.round(max);
-        return `<div class="vgv_avbarct"><div class="vgv_avbarfg" style="width:${pct}%;" stat="hp"></div><div class="vgv_avbartxt">HEALTH: ${cur}/${max} (${pct}%) +${regen}</div></div>`;
+        return `&lt;div class="vgv_avbarct">&lt;div class="vgv_avbarfg" style="width:${pct}%;" stat="hp">&lt;/div>&lt;div class="vgv_avbartxt">HEALTH: ${cur}/${max} (${pct}%) +${regen}&lt;/div>&lt;/div>`;
     }
 }
 
@@ -963,7 +991,7 @@ class ManaATE extends AvatarTooltipElement {
         var regen = value[2];
         cur = Math.round(cur);
         max = Math.round(max);
-        return `<div class="vgv_avbarct"><div class="vgv_avbarfg" style="width:${pct}%;" stat="mana"></div><div class="vgv_avbartxt">MANA: ${cur}/${max} (${pct}%) +${regen}</div></div>`;
+        return `&lt;div class="vgv_avbarct">&lt;div class="vgv_avbarfg" style="width:${pct}%;" stat="mana">&lt;/div>&lt;div class="vgv_avbartxt">MANA: ${cur}/${max} (${pct}%) +${regen}&lt;/div>&lt;/div>`;
     }
 }
 
@@ -1054,7 +1082,7 @@ class TalentsATE extends TAIATE {
     /** @see AvatarTooltipElement */
     check_update(value) {
         if (value.length != this.value.length) { return true; }
-        for (var i = 0; i < 8; i++) {
+        for (var i = 0; i &lt; 8; i++) {
             if (this.value[i][0] != value[i][0]) { return true; }
             if (this.value[i][1] != value[i][1]) { return true; }
         }
@@ -1078,7 +1106,7 @@ class TalentsATE extends TAIATE {
      * @return {string} HTML of hero talents summary text
      */
     handler(value) {
-        return 'TALENTS &#9654;';
+        return 'TALENTS &amp;#9654;';
     }
 }
 
@@ -1099,7 +1127,7 @@ class AbilitiesATE extends TAIATE {
         this.imageTooltips = [];
         this.imageListeners = [];
         var self = this;
-        for (var i = 0; i < 6; i++) {
+        for (var i = 0; i &lt; 6; i++) {
             
             // create the img placeholder for the ability
             var img = document.createElement('img');
@@ -1140,8 +1168,8 @@ class AbilitiesATE extends TAIATE {
     /** @see AvatarTooltipElement */
     check_update(value) {
         if (value.length != this.value.length) { return true; }
-        for (var i = 0; i < 6; i++) {
-            if (this.value[i] && value[i]) {
+        for (var i = 0; i &lt; 6; i++) {
+            if (this.value[i] &amp;&amp; value[i]) {
                 if (this.value[i][0] != value[i][0]) { return true; }
                 if (this.value[i][1] != value[i][1]) { return true; }
             }
@@ -1155,7 +1183,7 @@ class AbilitiesATE extends TAIATE {
         var updated = this.check_update(value);
         if (updated || force) { 
             this.value = value; 
-            for (var i = 0; i < 6; i++) {
+            for (var i = 0; i &lt; 6; i++) {
                 if (this.value[i]) {
                     this.imageTooltips[i].set_html(TOOLTIPS.html(value[i][0], value[i][1]));
                     this.images[i].style.display = 'inline-block';
@@ -1180,7 +1208,7 @@ class AbilitiesATE extends TAIATE {
      * @return {string} HTML of hero abilties summary text
      */
     handler(value) {
-        return 'ABILITIES &#9654;';
+        return 'ABILITIES &amp;#9654;';
     }
     
     /** @see TAIATE*/
@@ -1206,7 +1234,7 @@ class ItemsATE extends TAIATE {
         this.imageTooltips = [];
         this.imageListeners = [];
         var self = this;
-        for (var i = 0; i < 9; i++) {
+        for (var i = 0; i &lt; 9; i++) {
             
             // create the img placeholder for the item
             var img = document.createElement('img');
@@ -1247,8 +1275,8 @@ class ItemsATE extends TAIATE {
     /** @see AvatarTooltipElement */
     check_update(value) {
         if (value.length != this.value.length) { return true; }
-        for (var i = 0; i < 9; i++) {
-            if (this.value[i] && value[i]) {
+        for (var i = 0; i &lt; 9; i++) {
+            if (this.value[i] &amp;&amp; value[i]) {
                 if (this.value[i] != value[i]) { return true; }
             }
         }
@@ -1261,7 +1289,7 @@ class ItemsATE extends TAIATE {
         var updated = this.check_update(value);
         if (updated || force) { 
             this.value = value; 
-            for (var i = 0; i < 9; i++) {
+            for (var i = 0; i &lt; 9; i++) {
                 if (this.value[i]) {
                     this.imageTooltips[i].set_html(TOOLTIPS.html(value[i]));
                     this.images[i].style.display = 'inline-block';
@@ -1286,7 +1314,7 @@ class ItemsATE extends TAIATE {
      * @return {string} HTML of hero items summary text
      */
     handler(value) {
-        return 'ITEMS &#9654;';
+        return 'ITEMS &amp;#9654;';
     }
     
     /** @see TAIATE*/
@@ -1385,7 +1413,7 @@ function update_container() {
  */
 function close_tooltips_but(ttid) {
     for (var tooltip of tooltips) {
-        if ((tooltip.ttmid != ttid) && (tooltip.visible)) { 
+        if ((tooltip.ttmid != ttid) &amp;&amp; (tooltip.visible)) { 
             tooltip.stuck = false;
             tooltip.hide();
         }
@@ -1429,7 +1457,7 @@ function update() {
         var heroes = TIMER.get_all(videoTime);
         var talentIdAndLevels = nested_to_separate(focalHero.talents);
         boxes['focus']['talents'].update(focalSlots, focalHero.name, talentIdAndLevels[0], talentIdAndLevels[1]);
-        for (var i = 0; i < 6; i++) {
+        for (var i = 0; i &lt; 6; i++) {
             var box = boxes['focus']['abilities'][i];
             if (focalSlots == 0) {
                 box.deactivate(); 
@@ -1444,7 +1472,7 @@ function update() {
                 box.activate();
             }
         }
-        for (var i = 0; i < 9; i++) {
+        for (var i = 0; i &lt; 9; i++) {
             var box = boxes['focus']['items'][i];
             if (focalSlots == 0 ) { box.deactivate(); }
             else {
@@ -1500,3 +1528,26 @@ chrome.runtime.onMessage.addListener(
         return true;
     }
 );
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ABILITY_STATES">ABILITY_STATES</a></li><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#connectAttempts">connectAttempts</a></li><li><a href="global.html#dataDiv">dataDiv</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#TOOLTIPS">TOOLTIPS</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 26 2018 14:59:48 GMT-0500 (Haiti Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// get options in the options doc by the option id
+/**
+ * Gets options in the options page by their ids.
+ * @return {json} - option keys and values
+ */
 function get_option_values() {
     var optionValueElements = document.getElementsByTagName('input');
     var output = {};
@@ -45,6 +48,10 @@ function get_option_values() {
 
 
 // set options in the options doc by the option id
+/**
+ * Sets options in the options doc by their ids.
+ * @param {json} options - option keys and values
+ */
 function set_option_values(options) {
     var keys = Object.keys(options);
     for (var i = 0; i < keys.length; i++) {
@@ -67,7 +74,9 @@ function set_option_values(options) {
 }
 
 
-// Saves options to chrome.storage.sync.
+/**
+ * Saves current options to chrome sync storage.
+ */
 function save_options() {
     var optionValues = get_option_values();
     chrome.storage.sync.set(optionValues, function() {
@@ -78,9 +87,10 @@ function save_options() {
 }
 
 
-// Restores option state using the preferences stored in chrome.storage.
+/** 
+ * Restores option state using the preferences stored in chrome.storage.
+ */
 function restore_options() {chrome.storage.sync.get(null, set_option_values);}
-
 
 // add listeners
 document.addEventListener('DOMContentLoaded', restore_options);

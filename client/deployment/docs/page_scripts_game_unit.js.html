@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: page/scripts/game_unit.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: page/scripts/game_unit.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Copyright 2018 Austin Walker Milt
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+///////////////////////////////////////////////////////////////////////////////
+// CONSTANTS //////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+var DSC_CDN_KWD_IMG = chrome.runtime.getURL('page/assets/cooldown.png');
+var DSC_MAN_KWD_IMG = chrome.runtime.getURL('page/assets/mana.png');
+var DSC_CDN_IMG_SIZ = '15';
+var DSC_MAN_IMG_SIZ = '15';
+
+var DPE_KWD_ABL_DSC = 'description';
+var DPE_KWD_ABL_DET = 'details';
+var DPE_KWD_ABL_LOR = 'lore';
+var DPE_KWD_ABL_NAM = 'name';
+var DPE_KWD_ABL_NOT = 'notes';
+var DPE_KWD_ABL_SCP = 'scepter';
+var DPE_KWD_ABL_MOD = 'scepter_mods';
+var DPE_KWD_ABL_CST = 'cost';
+var DPE_KWD_ABL_COO = 'cooldown';
+var DPE_KWD_ABL_MAN = 'mana';
+var DPE_KWD_ABL_ICO = 'icon';
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// UTILITIES //////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// string substitution with placeholders
+// taken from http://stackoverflow.com/questions/18405736/is-there-a-c-sharp-string-format-equivalent-in-javascript
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
+
+
+// make strings iterable
+if (!String.prototype[Symbol.iterator]) {
+    String.prototype[Symbol.iterator] = function* () {
+        for (var i = 0; i &lt; this.length; i++) {
+            yield this.charAt(i);
+        }
+    }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// UNIT ABILITIES /////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+class BaseDescriptor {
+    
+    constructor(text='') {
+        this.text = text.replace(new RegExp("\\\\n", 'g'), ' ');
+        this.text = this.text.replace(new RegExp("&lt;h1>", 'g'), '');
+        this.text = this.text.replace(new RegExp("&lt;/h1>", 'g'), '&lt;br>');
+    }
+    
+    // function to pre-format strings of numbers, i.e. that change with the
+    //  level of the hero/item
+    preformat_levelnums(string) {
+    
+        var split = string.split(' ');
+        
+        // simple test for strings that are definitely not strings of nums
+        if ((split.length == 1) || isNaN(split[0])) {
+            return string;
+        }
+        
+        // test for it being all numbers and whether they are all the same
+        var num = +split[0];
+        var allnums = true;
+        var allsame = true;
+        var result;
+        for (var i = 1; i &lt; split.length; i++) {
+            if (isNaN(split[i])) {
+                allnums = false;
+            }
+            else if (num != (+split[i])) {
+                allsame = false;
+            }
+        }
+        
+        // format the string according to the above tests
+        if (allnums) {
+            if (allsame) {
+                result = '' + num;
+            }
+            else {
+                result = split.join(' / ');
+            }
+        }
+        
+        else {
+            result = string;
+        }
+        return result;
+    }
+    
+    html() {
+        var output = "{0}".format(this.text);
+        return output;
+    }    
+}
+
+
+
+class DescriptionDescriptor extends BaseDescriptor {}
+class ScepterDescriptor extends BaseDescriptor {}
+class CostDescriptor extends BaseDescriptor {}
+
+
+class LoreDescriptor extends BaseDescriptor {
+    
+    html() {
+        var output = "&lt;span class='lore'>{0}&lt;/span>".format(this.text);
+        return output;
+    }  
+
+}
+
+
+
+class NoteDescriptor extends BaseDescriptor {
+    
+    constructor(details=[]) {
+        super();
+        this.details = [];
+        for (let detail of details) {
+            this.push(detail);
+        }
+    }
+    
+    push(detail) {
+        this.details.push(detail);
+    }
+    
+    html() {
+        var output = '&lt;div class="extra-desc">';
+        for (let detail of this.details) {
+            output += '&lt;p>{0}&lt;/p>'.format(detail);
+        }
+        
+        output += '&lt;/div>';
+        return output;
+    }
+    
+}
+
+
+
+class NameDescriptor extends BaseDescriptor {
+    
+    constructor(name='', icon='') {
+        super();
+        this.name = name;
+        this.icon = icon;
+    }
+    
+    html() {
+        if (this.icon != '') { return '&lt;img src="{0}" style="height:5rem;width:auto;float:left;padding-right:0.5rem;">  {1}'.format(this.icon, this.name); }
+        else { return '{0}'.format(this.name) ; }
+    }
+}
+
+
+
+class DetailDescriptor extends BaseDescriptor {
+    
+    constructor(name='', value='') {
+        super();
+        this.name = name;
+        this.value = value;
+        if (Array.isArray(this.value)) {
+            this.value = this.value.join(', ');
+        }
+        this.value = this.preformat_levelnums(this.value);
+    }
+    
+    
+    html() {    
+        var name = this.name.replace('%', '');
+        var output = '{0} &lt;span class="detail-value">{1}&lt;/span>'.format(name, this.value)
+        return output;
+    }
+    
+    
+}
+
+
+
+class DetailsDescriptor extends BaseDescriptor {
+    
+    constructor(details=[]) {
+        super();
+        this.details = [];
+        this.covered = new Set();
+        for (let detail of details) {
+            this.push(detail);
+        }
+    }
+    
+    push(detail) {
+        if (!(detail instanceof DetailDescriptor)) {
+            throw 'New details must be DetailDescriptor objects.';
+        }
+        
+        // dont duplicate details
+        if (!this.covered.has(detail.name) || (detail.name == '+')) {
+            this.details.push(detail);
+            this.covered.add(detail.name);
+        }
+    }
+    
+    html() {
+        var output = '&lt;span class="details-list">';
+        for (let detail of this.details) {
+            output += '{0}&lt;br>'.format(detail.html());
+        }
+        output += '&lt;/span>';
+        return output;
+    }
+    
+    /**
+    * Merges two DetailsDescriptor objects into a new one. Doesnt handle duplicates.
+    *
+    * @param {DetailsDescriptor} other - Other DetailsDescriptor to merge with
+    * this one
+    * @returns {DetailsDescriptor} a new DetailsDescriptor object
+    */
+    merge(other) {
+        var output = new DetailsDescriptor(this.details);
+        for (let detail of other.details) {
+            output.push(detail);
+        }
+        return output;
+    }
+}
+
+
+
+class ScepterModsDescriptor extends DetailsDescriptor {}
+     
+     
+     
+class CooldownDescriptor extends BaseDescriptor {
+
+    constructor(text='') {
+        super();
+        this.text = text;
+        if (Array.isArray(this.text)) {
+            this.text = this.text.join(', ');
+        }
+        this.text = this.preformat_levelnums(this.text);
+    }
+    
+    html() {
+        var output = '';
+        if (this.text != '') {
+            output = '&lt;img src="{0}" style="width:{1}px;height:{1}px;">   {2}'.format(DSC_CDN_KWD_IMG, DSC_CDN_IMG_SIZ, this.text);
+        }
+        return output;
+    }
+}
+    
+    
+    
+class ManaCostDescriptor extends BaseDescriptor {
+
+    constructor(text='') {
+        super();
+        this.text = text;
+        if (Array.isArray(this.text)) {
+            this.text = this.text.join(', ');
+        }
+        this.text = this.preformat_levelnums(this.text);
+    }
+    
+    html() {
+        var output = '';
+        if (this.text != '') {
+            var output = '&lt;img src="{0}" style="width:{1}px;height:{1}px;">   {2}'.format(DSC_MAN_KWD_IMG, DSC_MAN_IMG_SIZ, this.text);
+        }
+        return output;
+    }
+    
+}    
+    
+
+
+class GameUnitAbility {
+
+    constructor(
+        id, name, description, notes, details, cooldown, mana, lore, scepter,
+        mods, cost
+    ) {
+        this.id = id; // string (of int) ID in DOTAPEDIA
+        this.name = name; // ability/item local name
+        this.description = description; // description
+        this.notes = notes; // bulleted/list extra description notes
+        this.details = details; // detailed attribute/values
+        this.cooldown = cooldown; // ability/item cooldown
+        this.mana = mana; // mana cost
+        this.lore = lore; // lore
+        this.scepter = scepter; // scepter description
+        this.mods = mods; // scepter modifications
+        this.cost = cost; // cost to purchase item
+    }
+    
+    
+    html(level=null) {
+        var output = '';
+        output += '&lt;span class="ability-name">{0}&lt;hr>&lt;/span>'.format(this.name.html());
+        output += '{0}'.format(this.description.html());
+        var next = this.notes.html();
+        if (next != '') { output += next; }
+        if (level !== null) { output += `LEVEL: ${level}`; }
+        next = '{0}'.format(this.details.html());
+        if (next != '') { output += '&lt;br>' + next; }
+        next = this.scepter.html();
+        if (next != '') {output += '&lt;br>&lt;span class="scepter-desc">Scepter: {0}&lt;/span>'.format(next)};
+        next = this.mods.html();
+        if (next != '') {output += '&lt;br>{0}'.format(next)};
+        next = this.cooldown.html();
+        if (next != '') {output += '&lt;br>{0}'.format(next)};
+        next = this.mana.html();
+        if (next != '') {output += '&amp;emsp;&amp;emsp;{0}'.format(next)};
+        // output += '';
+        // output += '&lt;br>&lt;br>{0}'.format(this.lore.html());
+        // output += '';
+        output += '';
+        return output;
+    }
+    
+    
+    /**
+    * Converts the Dotapedia ability object into a new GameUnitAbility
+    *
+    * @param {object} id - ID of the unit in DOTAPEDIA
+    * @returns {GameUnitAbility} GameUnitAbility from parsed object
+    */
+    static from_dotapedia(id) {
+        var obj = DOTAPEDIA[id];
+        var name = new NameDescriptor(obj[DPE_KWD_ABL_NAM], obj[DPE_KWD_ABL_ICO]);
+        var description = new BaseDescriptor(obj[DPE_KWD_ABL_DSC]);
+        var notes = new NoteDescriptor(obj[DPE_KWD_ABL_NOT]);
+        var details = new DetailsDescriptor();
+        for (var i = 0; i &lt; obj[DPE_KWD_ABL_DET].length; i++) {
+            details.push(new DetailDescriptor(obj[DPE_KWD_ABL_DET][i][0], obj[DPE_KWD_ABL_DET][i][1]));
+        }
+        var cooldown = new CooldownDescriptor(obj[DPE_KWD_ABL_COO]);
+        var mana = new ManaCostDescriptor(obj[DPE_KWD_ABL_MAN]);
+        var lore = new LoreDescriptor(obj[DPE_KWD_ABL_LOR]);
+        var scepter = new ScepterDescriptor(obj[DPE_KWD_ABL_SCP]);
+        var mods = new ScepterModsDescriptor();
+        for (i = 0; i &lt; obj[DPE_KWD_ABL_MOD].length; i++) {
+            mods.push(new DetailDescriptor(obj[DPE_KWD_ABL_MOD][i][0], obj[DPE_KWD_ABL_MOD][i][1]));
+        }
+        var cost = new CostDescriptor(obj[DPE_KWD_ABL_CST]);
+        var ability = new GameUnitAbility(
+            id, name, description, notes, details, cooldown, mana, lore, 
+            scepter, mods, cost
+        );
+        return ability;
+    }
+    
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// GAME UNIT LIBRARY //////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+class GameUnitLibrary {
+    
+    constructor(units=[]) {
+        this.units = {};
+        for (let unit of units) {
+            this.push(unit);
+        }
+    }
+    
+    push(unit) {
+        this.units[unit.id] = unit;
+    }
+    
+    static from_dotapedia(ids=null) {
+        var library = new GameUnitLibrary();
+        var unit;
+        for (var id in DOTAPEDIA) {
+            if (DOTAPEDIA.hasOwnProperty(id)) {
+                if ((ids === null) || (ids.includes(id))) {
+                    unit = GameUnitAbility.from_dotapedia(id);
+                    library.push(unit);
+                }
+            }
+        }
+        return library;
+    }
+    
+    html(id, level=null) {
+        if (this.units.hasOwnProperty(id)) {
+            return this.units[id].html(level);
+        }
+        else {
+            return '';
+        }
+    }
+    
+    html_talents(ids, levels=[]) {
+        var output = '&lt;table class="talent">';
+        var left;
+        var right;
+        var keys = [];
+        for (var i = ids.length-1; i > 0; i -= 2) {
+            right = '';
+            left = '';
+            output += '&lt;tr>';
+            if (this.units.hasOwnProperty(ids[i])) {
+                left = this.units[ids[i]].name.html();
+            }
+            if (this.units.hasOwnProperty(ids[i-1])) {
+                right = this.units[ids[i-1]].name.html();
+            }
+            output += `&lt;td class="talent-left" lvl=${levels[i]}>${left}&amp;emsp;&lt;/td>`;
+            output += `&lt;td class="talent-right" lvl=${levels[i-1]}>&amp;emsp;${right}&lt;/td>`;
+            output += '&lt;/tr>';
+        }        
+        output += '&lt;/table>';
+        return output;
+    }
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ABILITY_STATES">ABILITY_STATES</a></li><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#connectAttempts">connectAttempts</a></li><li><a href="global.html#dataDiv">dataDiv</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#TOOLTIPS">TOOLTIPS</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 26 2018 14:59:48 GMT-0500 (Haiti Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

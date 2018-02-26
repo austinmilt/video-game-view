@@ -1,4 +1,32 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: background/websocket_client.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: background/websocket_client.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
 Copyright 2018 Austin Walker Milt
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -201,7 +229,7 @@ function WebSocketClient(host) {
                 if (messageBody == '') { return; }
                 
                 // -- server sent results
-                if ((messageType == TYPE_RESULT) && requestID) {
+                if ((messageType == TYPE_RESULT) &amp;&amp; requestID) {
                     if (state.hasOwnProperty(requestID)) {
                         
                         // store in local storage for later retrieval
@@ -276,7 +304,7 @@ function WebSocketClient(host) {
                 clearInterval(self.pinger);
                 
                 // reconnect
-                if (!userDisconnectFlag && (connectAttempts < connectAttemptsMax)) {
+                if (!userDisconnectFlag &amp;&amp; (connectAttempts &lt; connectAttemptsMax)) {
                     state['connection'] = CONN_CONNECTING;
                     post_to_ports({ type: 'socket_reconnecting', message:'(Re)connection attempt ' + connectAttempts });
                     console.log('Connection closed or failed. Attempting reconnect.');
@@ -364,7 +392,7 @@ function post_to_ports(message) {
  */
 function kill_all_running_jobs() {
     for (var job of state['id_order']) {
-        if (killJobsOnUnload && !state[job]['ready']) {
+        if (killJobsOnUnload &amp;&amp; !state[job]['ready']) {
             remove_job(job);
         }
     }
@@ -384,7 +412,7 @@ function load_result(requestID, decompress=false, json=false) {
             if (response[requestID] !== undefined) {
                 var result = response[requestID];
                 if (decompress) { result = pako.inflate(result, {to: 'string'}); }
-                if (json && decompress) { result = JSON.parse(result); }
+                if (json &amp;&amp; decompress) { result = JSON.parse(result); }
                 resolve(result);
             }
             else { reject('Request not found.'); }
@@ -498,7 +526,7 @@ function set_popup_state(newState) { state['popup'] = newState; }
 function remove_job(jobID) {
     
     // tell the server to kill this job
-    if (CLIENT && !state[jobID]['ready']) {
+    if (CLIENT &amp;&amp; !state[jobID]['ready']) {
         request = {
             'type': 'kill_job',
             'request_id': jobID
@@ -633,7 +661,7 @@ function start_viewer(longID) {
             
             // add a listener that will activate the viewer when scripts have been injected
             var listener = function(tabId, changeInfo, tab) {
-                if ((tabId == tab.id) && (changeInfo.status == 'complete')) {
+                if ((tabId == tab.id) &amp;&amp; (changeInfo.status == 'complete')) {
                     chrome.tabs.onUpdated.removeListener(listener);
                     inject_scripts()
                     .then(function(){return activate({trigger: 'activate_master', data: longID})})
@@ -700,4 +728,26 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             
         return true;
     }
-});
+});</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ABILITY_STATES">ABILITY_STATES</a></li><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#connectAttempts">connectAttempts</a></li><li><a href="global.html#dataDiv">dataDiv</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#TOOLTIPS">TOOLTIPS</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 26 2018 14:59:48 GMT-0500 (Haiti Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
