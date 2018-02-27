@@ -1,4 +1,5 @@
 /**
+ * @license Apache-2.0
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +14,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+ 
+/**
+ * @file Classes for VGV's custom tooltips including simple help tooltips
+ * as well as handling more complex behavior in the viewer's tooltips.
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
+*/
 
+/**
+ * @description DOM element attribute name of the containing element for a static tooltip
+ * @constant
+ * @default
+ */
 const ATTR_ADDTO = 'vgvtt_addto';
+
+/** 
+ * @description DOM element attribute name of the tooltip HTML for a static tooltip
+ * @constant
+ * @default
+ */
 const ATTR_TT = 'vgvtt_html';
+
+/** 
+ * @description DOM element attribute name of the additional styling classes for a static tooltip
+ * @constant
+ * @default
+ */
 const ATTR_CLASSES = 'vgvtt_class';
+
 const CLASS_TT = 'vgvtt';
 const TT_HTMLTYPE ='div';
-
 const TMPL_TEXT_NODE_TYPE = 3;
 const TMPL_ATTR_TID = 'vgvtt_tid';
 const TMPL_CHILD_TYPE = 'span';
 
+
+/**
+ * Base class for VGV's custom tooltips. The basic features of a VGVTooltip
+ * are that (1) they work by explicitly adding/removing a div to the DOM, (2)
+ * these are not (necessarily) the child element of the element they tooltip, 
+ * (3) they can be positioned relative to the mouse or to the tooltipped element
+ */
 class VGVTooltip {
     
+    /**
+     * Creates a VGVTooltip.
+     * @param {DOMElement} element - DOM element that the tooltip describes
+     * @param {DOMElement} container - DOM element that the tooltip's element will be a child of
+     * @param {string} [html=''] - starting HTML to give the tooltip's element
+     * @param {string[]} [cssClasses=[]] - additional styling classes for the tooltip element
+     * @param {object} [posBy={by:'mouse'}] - how the tooltip should be positioned;
+     *      can have args {by:'mouse'|'element', direction:'north'|'south'|'east'|'west'}
+     * @param {boolean} [sticky=false] - if true, clicking [element] will cause
+     *      tooltip to remain visible even when not hovered
+     */
     constructor(element, container, html, cssClasses, posBy, sticky) {
         
         // update defaults and check args
@@ -52,18 +94,48 @@ class VGVTooltip {
         element._vgvtt_ = this;
         this._e_ = element;
         this._c_ = container;
+        
+        /** Displays/shows the tooltip by adding to the DOM.*/
         this.display = function(event) { self._display(self, event); }
+        
+        /** Hides the tooltip (by removing from the DOM).*/
         this.hide = function(event) { self._hide(self); }
+        
+        /** Toggles the visible state of the tooltip (calls {@link hide} or {@link display}.*/
         this.toggle_display = function(event) { self._toggle_display(self, event); }
+        
+        /** Sticks the tooltip if it is sticky (usually dont call directly).*/
         this.stick = function(event) { self._stick(self); }
+        
+        /** Unsticks the tooltip if it is sticky (usually dont call directly).*/
         this.unstick = function(event) { self._unstick(self); }
+        
+        /** Toggles the stuck state of the tooltip (calls {@link stick} or {@link unstick}; usually dont call directly).*/
         this.toggle_stuck = function(event) { self._toggle_stuck(self); }
+        
+        /** Enables the tooltip to be displayed.*/
         this.enable = function() { self._enable(self); }
+        
+        /** Prevents the tooltip from being displayed.*/
         this.disable = function() { self._disable(self); }
+        
+        /** Removes the tooltip element from the DOM, removes listeners, and unsets the tooltip data.*/
         this.remove = function() { self._remove(self); }
+        
+        /**
+         * Sets the HTML of the tooltip element.
+         * @param {string} h - HTML to give the tooltip
+         * @param {string} [c=undefined] - child DOM ID in the tooltip to set the HTML of
+         */
         this.set_html = function(h, c) { self._set_html(self, h, c); }
+        
+        /** Iteratively calls {@link set_html} on an array of (id, html) pairs.*/
         this.set_htmls = function(h) { self._set_htmls(self, h); }
+        
+        /** Sets the tooltip position using the mouse.*/
         this.set_position_by_mouse = function(event) { self._set_position_by_mouse(self, event); }
+        
+        /** Sets the tooltip position based on the hovering element.*/
         this.set_pos_by_element = function() { self._set_pos_by_element(self, self.rel.direction); }
         
         // add the tooltip listeners to display and hide
@@ -266,7 +338,10 @@ class VGVTooltip {
 }
 
 
-// a tooltip that displays the innerText of its tooltip element
+/**
+ * A tooltip that displays the innerText of its hovering element.
+ * @extends VGVTooltip
+ */
 class VGVIdentityTooltip extends VGVTooltip {
     
     constructor(element, container, cssClasses) {
@@ -280,6 +355,7 @@ class VGVIdentityTooltip extends VGVTooltip {
 
 // holds info about an element in a template without immediately constructing
 // the html or setting up the hierarchy
+// CURRENTLY UNUSED AND UNSUPPORTED
 class VGVTemplateElement {
     constructor(tag, tid, html, styles, attributes) {
         if (!tid) { tid = null; }
@@ -327,6 +403,7 @@ class VGVTemplateElement {
 
 // a tooltip built from a template that updates individual elements instead
 // of the whole html
+// CURRENTLY UNUSED AND UNSUPPORTED
 class VGVTemplateTooltip {
     
     constructor(templateHierarchy) {
@@ -434,8 +511,15 @@ class VGVTemplateTooltip {
 }
 
 
-
-// function to build tooltips in a static html
+/**
+ * Builds static tooltips in the DOM. 
+ * <ul>
+ *      <li>This function is called when tooltip.js is included in a page.</li>
+ *      <li>To work correctly, the HTML for an element that is to be tooltipped must 
+ *          have attributes {@link ATTR_ADDTO}, {@link ATTR_TT},
+ *          and {@link ATTR_CLASSES}</li>
+ * </ul>
+ */
 function build_static_tooltips() {
     var elementsWithTooltips = document.querySelectorAll('[' + ATTR_TT + ']');
     for (var i = 0; i < elementsWithTooltips.length; i++) {

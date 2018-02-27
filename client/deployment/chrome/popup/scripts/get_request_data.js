@@ -1,4 +1,5 @@
 /**
+ * @license Apache-2.0
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+ 
+/**
+ * @file This script gets video details necessary for the server to properly
+ * process a video. Gets things like the video URL, replay URLs, and checks
+ * that necessary information is present.
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
+*/
 
 (function() {
     
+/**
+ * @description DOM element ID of the video description
+ * @constant
+ * @default
+*/
 const GRU_DESCRIPTION = 'description';
+
+/**
+ * @description tag for VGV info in the video description
+ * @constant
+ * @default
+*/
 const GRU_FLAG = '@videogameview';
+
+/**
+ * @description DOM element class of the video title
+ * @constant
+ * @default
+*/
 const GRU_TITLECLASS = 'title ytd-video-primary-info-renderer';
 const VALID_DOMAINS = ['youtube.com', 'youtu.be'];
 const REQUIRE_REPLAYS = true;
 const RE_BLANK = new RegExp('\s');
 
 
-// custom error for problems with parsing the replay urls
+/** Custom error for problems with parsing the replay URLs.*/
 function InvalidReplayURL(message) {
     this.name = 'InvalidReplayURL';
     this.message = message;
@@ -33,7 +58,7 @@ function InvalidReplayURL(message) {
 InvalidReplayURL.prototype = new Error;
 
 
-// custom error for not being able to find the flag for replay data
+/** Custom error for not being able to find the [flag]{@link GRU_FLAG} for replay data.*/
 function MissingFlagError(message) {
     this.name = 'MissingFlagError';
     this.message = message;
@@ -42,7 +67,7 @@ function MissingFlagError(message) {
 MissingFlagError.prototype = new Error;
 
 
-// custom error for invalid replay data 
+/** Custom error for not being able to find the [video description]{@link GRU_DESCRIPTION}*/
 function InvalidDescriptionError(message) {
     this.name = 'InvalidDescriptionError';
     this.message = message;
@@ -51,7 +76,7 @@ function InvalidDescriptionError(message) {
 InvalidDescriptionError.prototype = new Error;
 
 
-// custom error for it not being a youtube video
+/** Custom error for the page not being a youtube video.*/
 function NotYoutubeError(message) {
     this.name = 'NotYoutubeError';
     this.message = message;
@@ -60,7 +85,7 @@ function NotYoutubeError(message) {
 NotYoutubeError.prototype = new Error;
 
 
-// test that replay datum is a url 
+/** @return {boolean} true if the node is evaluated as a URL*/
 function is_url(node) {
     if (typeof node.hasAttribute == 'function') {
         if (node.hasAttribute('href')) { return true; }
@@ -69,7 +94,7 @@ function is_url(node) {
 }
 
 
-// get url of replay
+/** @return {string} URL from a node which may just be a hyperlink*/
 function get_replay_url(node) {
     if (is_url(node)) {
         try { return (new URL(unescape(node.href))).searchParams.get('q'); }
@@ -79,7 +104,7 @@ function get_replay_url(node) {
 }
 
 
-// function to parse replay links from video description
+/** @return {string[][]} [[replay_1_start, replay_1_url], [replay_2_start, replay_2_url]...]*/
 function get_replay_urls() {
     var elDescription = document.getElementById(GRU_DESCRIPTION);
     var line;
@@ -134,7 +159,7 @@ function get_replay_urls() {
 }
 
 
-// function to get video url
+/** @return {string} URL of the video to be processed*/
 function get_video_url(url) {
     try { var url = document.location.href; }
     catch (e) { throw new NotYoutubeError('Page is not a youtube page.'); }
@@ -150,13 +175,13 @@ function get_video_url(url) {
 }
 
 
-// function to get video title
+/** @return {string} video title*/
 function get_video_title() {
     return document.getElementsByClassName(GRU_TITLECLASS)[0].innerText;
 }
 
 
-// function to collect and organize request data
+/** @return {object} data necessary for submitting a request to the server*/
 function get_request_data() {
     var video = get_video_url();
     var title = get_video_title();

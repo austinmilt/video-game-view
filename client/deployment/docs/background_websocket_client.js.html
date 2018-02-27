@@ -26,29 +26,56 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/*
-Copyright 2018 Austin Walker Milt
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+            <pre class="prettyprint source linenums"><code>/**
+ * @license Apache-2.0
+ * Copyright 2018 Austin Walker Milt
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+ 
+/**
+ * @file Extension background page and websocket client for communication with server. 
+ * Manages connection to the server, piping messages to the popup, starting the
+ * viewer, popup states, and popup action requests (e.g. new videos, removal of
+ * results, etc.)
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
 */
 
 ///////////////////////////////////////////////////////////////////////////////
 // CONSTANTS AND INITIALIZATION OF GLOBALS ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/** CONSTANTS ****************************************************************/
+// CONSTANTS ****************************************************************/
+
+/**
+ * @description interval between pings to the server (milliseconds)
+ * @constant
+ * @default
+*/
 const PING_INTERVAL = 30000;
+
+/**
+ * @description maximum delay for a pong response from the server (milliseconds)
+ * @constant
+ * @default
+*/
 const PONG_TIMEOUT = 120000;
+
+/**
+ * @description interval between attempts to re-connect to the server (milliseconds)
+ * @constant
+ * @default
+*/
 const CONNECT_INTERVAL = 5000;
 const CONN_CONNECTED = 'connected';
 const CONN_DISCONNECTED = 'disconnected';
@@ -68,7 +95,7 @@ const TYPE_SETSESSION = "set_session_id";
 const hostURL = 'wss://www.videogameview.com/websocket';
 
 
-/** GLOBALS ******************************************************************/
+// GLOBALS ******************************************************************/
 var connectAttempts = 0;
 var userDisconnectFlag = false;
 var killJobsOnUnload = true;
@@ -133,9 +160,10 @@ chrome.storage.local.get(['background_state'], function(e) {
  * Class that opens and maintains a (websocket) connection to the analysis 
  * server in order to make video processing requests and receive processing
  * messages and results.
- *
- * @note This websocket will be disconnected by the GCP balancer after the
+ * &lt;p>
+ * Note: This websocket will be disconnected by the GCP balancer after the
  * backend teimout, regardless of ping/pong activity.
+ * &lt;/p>
  */
 function WebSocketClient(host) {
     this.host = host;
@@ -738,13 +766,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ABILITY_STATES">ABILITY_STATES</a></li><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#connectAttempts">connectAttempts</a></li><li><a href="global.html#dataDiv">dataDiv</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#TOOLTIPS">TOOLTIPS</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="BaseDescriptor.html">BaseDescriptor</a></li><li><a href="CooldownDescriptor.html">CooldownDescriptor</a></li><li><a href="CostDescriptor.html">CostDescriptor</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="DescriptionDescriptor.html">DescriptionDescriptor</a></li><li><a href="DetailDescriptor.html">DetailDescriptor</a></li><li><a href="DetailsDescriptor.html">DetailsDescriptor</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GameUnitAbility.html">GameUnitAbility</a></li><li><a href="GameUnitLibrary.html">GameUnitLibrary</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HeroTime.html">HeroTime</a></li><li><a href="HeroTimeSet.html">HeroTimeSet</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="LoreDescriptor.html">LoreDescriptor</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="ManaCostDescriptor.html">ManaCostDescriptor</a></li><li><a href="NameDescriptor.html">NameDescriptor</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="NoteDescriptor.html">NoteDescriptor</a></li><li><a href="OrderedHeroTimes.html">OrderedHeroTimes</a></li><li><a href="ScepterDescriptor.html">ScepterDescriptor</a></li><li><a href="ScepterModsDescriptor.html">ScepterModsDescriptor</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li><li><a href="VGVIdentityTooltip.html">VGVIdentityTooltip</a></li><li><a href="VGVTooltip.html">VGVTooltip</a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_result">activate_result</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#add_tracker">add_tracker</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#ATTR_CLASSES">ATTR_CLASSES</a></li><li><a href="global.html#ATTR_TT">ATTR_TT</a></li><li><a href="global.html#build_static_tooltips">build_static_tooltips</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#CONNECT_INTERVAL">CONNECT_INTERVAL</a></li><li><a href="global.html#create_hero_timer">create_hero_timer</a></li><li><a href="global.html#create_tooltip_library">create_tooltip_library</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#get_user_request_info">get_user_request_info</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#InvalidDescriptionError">InvalidDescriptionError</a></li><li><a href="global.html#InvalidTimeError">InvalidTimeError</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#make_request">make_request</a></li><li><a href="global.html#menu_forum">menu_forum</a></li><li><a href="global.html#menu_mainsite">menu_mainsite</a></li><li><a href="global.html#menu_options">menu_options</a></li><li><a href="global.html#menu_sample">menu_sample</a></li><li><a href="global.html#menu_start">menu_start</a></li><li><a href="global.html#N_TALENTS">N_TALENTS</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#open_correct_page">open_correct_page</a></li><li><a href="global.html#open_menu">open_menu</a></li><li><a href="global.html#open_tracker">open_tracker</a></li><li><a href="global.html#parse_replay_start">parse_replay_start</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#PONG_TIMEOUT">PONG_TIMEOUT</a></li><li><a href="global.html#post_request_to_background">post_request_to_background</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#refresh_all">refresh_all</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#remove_tracker">remove_tracker</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#set_status_led">set_status_led</a></li><li><a href="global.html#socket_closed">socket_closed</a></li><li><a href="global.html#socket_closed_by_user">socket_closed_by_user</a></li><li><a href="global.html#socket_connecting">socket_connecting</a></li><li><a href="global.html#socket_opened">socket_opened</a></li><li><a href="global.html#socket_reconnecting">socket_reconnecting</a></li><li><a href="global.html#split_abilities_talents">split_abilities_talents</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_connection_dependents">update_connection_dependents</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#update_general">update_general</a></li><li><a href="global.html#update_shorts">update_shorts</a></li><li><a href="global.html#update_tracker">update_tracker</a></li><li><a href="global.html#user_disconnect">user_disconnect</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 26 2018 14:59:48 GMT-0500 (Haiti Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Feb 27 2018 14:44:19 GMT-0500 (Haiti Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

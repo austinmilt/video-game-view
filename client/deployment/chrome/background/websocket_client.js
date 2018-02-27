@@ -1,26 +1,53 @@
-/*
-Copyright 2018 Austin Walker Milt
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+/**
+ * @license Apache-2.0
+ * Copyright 2018 Austin Walker Milt
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+ 
+/**
+ * @file Extension background page and websocket client for communication with server. 
+ * Manages connection to the server, piping messages to the popup, starting the
+ * viewer, popup states, and popup action requests (e.g. new videos, removal of
+ * results, etc.)
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
 */
 
 ///////////////////////////////////////////////////////////////////////////////
 // CONSTANTS AND INITIALIZATION OF GLOBALS ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/** CONSTANTS ****************************************************************/
+// CONSTANTS ****************************************************************/
+
+/**
+ * @description interval between pings to the server (milliseconds)
+ * @constant
+ * @default
+*/
 const PING_INTERVAL = 30000;
+
+/**
+ * @description maximum delay for a pong response from the server (milliseconds)
+ * @constant
+ * @default
+*/
 const PONG_TIMEOUT = 120000;
+
+/**
+ * @description interval between attempts to re-connect to the server (milliseconds)
+ * @constant
+ * @default
+*/
 const CONNECT_INTERVAL = 5000;
 const CONN_CONNECTED = 'connected';
 const CONN_DISCONNECTED = 'disconnected';
@@ -40,7 +67,7 @@ const TYPE_SETSESSION = "set_session_id";
 const hostURL = 'wss://www.videogameview.com/websocket';
 
 
-/** GLOBALS ******************************************************************/
+// GLOBALS ******************************************************************/
 var connectAttempts = 0;
 var userDisconnectFlag = false;
 var killJobsOnUnload = true;
@@ -105,9 +132,10 @@ chrome.storage.local.get(['background_state'], function(e) {
  * Class that opens and maintains a (websocket) connection to the analysis 
  * server in order to make video processing requests and receive processing
  * messages and results.
- *
- * @note This websocket will be disconnected by the GCP balancer after the
+ * <p>
+ * Note: This websocket will be disconnected by the GCP balancer after the
  * backend teimout, regardless of ping/pong activity.
+ * </p>
  */
 function WebSocketClient(host) {
     this.host = host;

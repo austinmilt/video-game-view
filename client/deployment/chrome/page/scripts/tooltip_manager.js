@@ -1,4 +1,5 @@
 /**
+ * @license Apache-2.0
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+*/
+ 
+/**
+ * @file Manages the VGV UI, including all DOM elements in the youtube page 
+ * and their dynamic updates as the video progresses.
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
 */
 
 
@@ -1301,8 +1308,11 @@ class AvatarTooltipHTML {
     
     /**
      * Creates an AvatarTooltipHTML.
+     * <p>
+     * note attributes should be AvatarTooltipElement's in the order they 
+     * should appear in the output html
+     * </p>
      * @param {AvatarTooltipElement[]} [elements=[]] - elements to add to this container
-     * @note note attributes should be AvatarTooltipElement's in the order they should appear in the output html
      */
     constructor(elements=[]) {
         this.elements = {};

@@ -1,4 +1,5 @@
 /**
+ * @license Apache-2.0
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+ 
+/**
+ * @file Master script for the VGV UI including creating the game unit
+ * library, ordered hero time list, and activating the UI when ready.
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
+*/
 
 var TOOLTIPS;
 var TIMER;
 
-// creates the hero timer
+
+/** @return {Promise} promise that resolves the [ordered hero time list]{@link OrderedHeroTimes}*/
 function create_hero_timer(timerData) {
     return new Promise(function(resolve, reject) {
         TIMER = OrderedHeroTimes.from_json(timerData);
@@ -26,7 +34,7 @@ function create_hero_timer(timerData) {
 }
 
 
-// create the tooltip library for feeding the manager
+/** @return {Promise} promise that resolves the [tooltip library]{@link GameUnitLibrary}*/
 function create_tooltip_library(heroTimes) {
     return new Promise(function(resolve, reject) {
         TOOLTIPS = GameUnitLibrary.from_dotapedia(heroTimes.list_ids());
@@ -36,7 +44,12 @@ function create_tooltip_library(heroTimes) {
 
 
 
-// get the replay data and then activate tooltips etc.
+/**
+ * @return {Promise} promise that resolves when the 
+ * [ordered hero times]{@link create_hero_timer}, 
+ * [game unit library]{@link create_tooltip_library},
+ * and start of the VGV viewer have completed
+ */
 function activate(jobID) {
     return new Promise(function(resolve, reject) {
         chrome.runtime.sendMessage({action: 'get_result', id: jobID}, function(response) {

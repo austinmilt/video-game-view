@@ -1,4 +1,5 @@
 /**
+ * @license Apache-2.0
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+*/
+ 
+/**
+ * @file Classes for relatively static ability and item tooltips used in 
+ * {@link tooltip_manager.js}.
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
 */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -68,8 +75,14 @@ if (!String.prototype[Symbol.iterator]) {
 ///////////////////////////////////////////////////////////////////////////////
 // UNIT ABILITIES /////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+/** Base class for handling the (relatively static) ability and item tooltips in HoverBox's.*/
 class BaseDescriptor {
     
+    /**
+     * Creates a new BaseDescriptor.
+     * @param {string} [text=''] - text value to show in the descriptor HTML
+     */
     constructor(text='') {
         this.text = text.replace(new RegExp("\\\\n", 'g'), ' ');
         this.text = this.text.replace(new RegExp("<h1>", 'g'), '');
@@ -78,6 +91,11 @@ class BaseDescriptor {
     
     // function to pre-format strings of numbers, i.e. that change with the
     //  level of the hero/item
+    /**
+     * Formats strings of numbers, i.e. the different values at different ability levels.
+     * @param {string} [string=''] - values separated by space
+     * @return {string} alternative string with special delimiting and formatting
+     */
     preformat_levelnums(string) {
     
         var split = string.split(' ');
@@ -117,6 +135,9 @@ class BaseDescriptor {
         return result;
     }
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         var output = "{0}".format(this.text);
         return output;
@@ -124,14 +145,36 @@ class BaseDescriptor {
 }
 
 
-
+/**
+ * Ability/Item "description" descriptor.
+ * @extends BaseDescriptor
+ */
 class DescriptionDescriptor extends BaseDescriptor {}
+
+
+/**
+ * Ability sceptor upgrade descriptor.
+ * @extends BaseDescriptor
+ */
 class ScepterDescriptor extends BaseDescriptor {}
+
+
+/**
+ * Item purchase cost descriptor.
+ * @extends BaseDescriptor
+ */
 class CostDescriptor extends BaseDescriptor {}
 
 
+/**
+ * Ability/Item lore descriptor.
+ * @extends BaseDescriptor
+ */
 class LoreDescriptor extends BaseDescriptor {
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         var output = "<span class='lore'>{0}</span>".format(this.text);
         return output;
@@ -140,25 +183,39 @@ class LoreDescriptor extends BaseDescriptor {
 }
 
 
-
+/**
+ * Ability/Item additional notes descriptor.
+ * @extends BaseDescriptor
+ */
 class NoteDescriptor extends BaseDescriptor {
     
-    constructor(details=[]) {
+    /**
+     * Creates a NoteDescriptor.
+     * @param {string[]} [notes=[]] - array of note statements
+     */
+    constructor(notes=[]) {
         super();
-        this.details = [];
-        for (let detail of details) {
-            this.push(detail);
+        this.notes = [];
+        for (let note of notes) {
+            this.push(note);
         }
     }
     
-    push(detail) {
-        this.details.push(detail);
+    /**
+     * Pushes a note to the object's array.
+     * @param {string} note - note to add to the array.
+     */
+    push(note) {
+        this.notes.push(note);
     }
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         var output = '<div class="extra-desc">';
-        for (let detail of this.details) {
-            output += '<p>{0}</p>'.format(detail);
+        for (let note of this.notes) {
+            output += '<p>{0}</p>'.format(note);
         }
         
         output += '</div>';
@@ -168,7 +225,10 @@ class NoteDescriptor extends BaseDescriptor {
 }
 
 
-
+/**
+ * Ability/Item name descriptor.
+ * @extends BaseDescriptor
+ */
 class NameDescriptor extends BaseDescriptor {
     
     constructor(name='', icon='') {
@@ -177,6 +237,9 @@ class NameDescriptor extends BaseDescriptor {
         this.icon = icon;
     }
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         if (this.icon != '') { return '<img src="{0}" style="height:5rem;width:auto;float:left;padding-right:0.5rem;">  {1}'.format(this.icon, this.name); }
         else { return '{0}'.format(this.name) ; }
@@ -184,9 +247,17 @@ class NameDescriptor extends BaseDescriptor {
 }
 
 
-
+/**
+ * Ability/Item additional detail (e.g. DETAIL: value) descriptor.
+ * @extends BaseDescriptor
+ */
 class DetailDescriptor extends BaseDescriptor {
     
+    /**
+     * Creates a DetailDescriptor.
+     * @param {string} [name=''] - name/tag of the detail
+     * @param {string} [value=''] - value of the detail
+     */
     constructor(name='', value='') {
         super();
         this.name = name;
@@ -197,7 +268,9 @@ class DetailDescriptor extends BaseDescriptor {
         this.value = this.preformat_levelnums(this.value);
     }
     
-    
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {    
         var name = this.name.replace('%', '');
         var output = '{0} <span class="detail-value">{1}</span>'.format(name, this.value)
@@ -208,9 +281,16 @@ class DetailDescriptor extends BaseDescriptor {
 }
 
 
-
+/**
+ * Container class for multiple {@link DetailDescriptor}.
+ * @extends BaseDescriptor
+ */
 class DetailsDescriptor extends BaseDescriptor {
     
+    /**
+     * Creates a DetailsDescriptor.
+     * @param {DetailDescriptor[]} [details=[]] - details to put in this descriptor
+     */
     constructor(details=[]) {
         super();
         this.details = [];
@@ -220,6 +300,10 @@ class DetailsDescriptor extends BaseDescriptor {
         }
     }
     
+    /**
+     * Pushes a {@DetailDescriptor} to this object's array.
+     * @param {DetailDescriptor} detail - detail to push to the array
+     */
     push(detail) {
         if (!(detail instanceof DetailDescriptor)) {
             throw 'New details must be DetailDescriptor objects.';
@@ -232,6 +316,9 @@ class DetailsDescriptor extends BaseDescriptor {
         }
     }
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         var output = '<span class="details-list">';
         for (let detail of this.details) {
@@ -258,13 +345,23 @@ class DetailsDescriptor extends BaseDescriptor {
 }
 
 
-
+/**
+ * Class for sceptor modification details.
+ * @extends DetailsDescriptor
+ */
 class ScepterModsDescriptor extends DetailsDescriptor {}
      
      
-     
+/**
+ * Ability/Item cooldown descriptor.
+ * @extends BaseDescriptor
+ */
 class CooldownDescriptor extends BaseDescriptor {
 
+    /**
+     * Creates a CooldownDescriptor.
+     * @param {string} [text=''] - cooldown time
+     */
     constructor(text='') {
         super();
         this.text = text;
@@ -274,6 +371,9 @@ class CooldownDescriptor extends BaseDescriptor {
         this.text = this.preformat_levelnums(this.text);
     }
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         var output = '';
         if (this.text != '') {
@@ -284,9 +384,16 @@ class CooldownDescriptor extends BaseDescriptor {
 }
     
     
-    
+/**
+ * Ability/Item mana cost descriptor.
+ * @extends BaseDescriptor
+ */
 class ManaCostDescriptor extends BaseDescriptor {
 
+    /**
+     * Creates a ManaCostDescriptor.
+     * @param {string} [text=''] - ability item mana cost
+     */
     constructor(text='') {
         super();
         this.text = text;
@@ -296,6 +403,9 @@ class ManaCostDescriptor extends BaseDescriptor {
         this.text = this.preformat_levelnums(this.text);
     }
     
+    /**
+     * @return {string} HTML output for this descriptor
+     */
     html() {
         var output = '';
         if (this.text != '') {
@@ -307,9 +417,25 @@ class ManaCostDescriptor extends BaseDescriptor {
 }    
     
 
-
+/**
+ * Main container class and HTML handler for ability/item tooltips.
+ */
 class GameUnitAbility {
 
+    /**
+     * Constructs a GameUnitAbility.
+     * @param {string} id - dotapedia ID of the ability/item (just used for identification)
+     * @param {NameDescriptor} name - ability/item name
+     * @param {DescriptionDescriptor} description - ability/item main description
+     * @param {NoteDescriptor} notes - ability/item additional notes
+     * @param {DetailsDescriptor} details - ability/item named details
+     * @param {CooldownDescriptor} cooldown - ability/item cooldown 
+     * @param {ManaCostDescriptor} mana - ability/item use mana cost
+     * @param {LoreDescriptor} lore - ability/item lore
+     * @param {ScepterDescriptor} scepter - ability agh's upgrade description
+     * @param {ScepterModsDescriptor} mods - ability agh's upgrade modification details
+     * @param {CostDescriptor} cost - item purchase cost
+     */
     constructor(
         id, name, description, notes, details, cooldown, mana, lore, scepter,
         mods, cost
@@ -327,7 +453,9 @@ class GameUnitAbility {
         this.cost = cost; // cost to purchase item
     }
     
-    
+    /**
+     * @return {string} HTML output for this ability/item
+     */
     html(level=null) {
         var output = '';
         output += '<span class="ability-name">{0}<hr></span>'.format(this.name.html());
@@ -354,8 +482,7 @@ class GameUnitAbility {
     
     
     /**
-    * Converts the Dotapedia ability object into a new GameUnitAbility
-    *
+    * Converts the Dotapedia ability object into a new GameUnitAbility.
     * @param {object} id - ID of the unit in DOTAPEDIA
     * @returns {GameUnitAbility} GameUnitAbility from parsed object
     */
@@ -391,8 +518,14 @@ class GameUnitAbility {
 ///////////////////////////////////////////////////////////////////////////////
 // GAME UNIT LIBRARY //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+/** Container and HTML handler for all abilities and item tooltips.*/
 class GameUnitLibrary {
     
+    /**
+     * Creates a GameUnitLibrary.
+     * @param {GameUnitAbility[]} [units=[]] - library units to put in the library
+     */
     constructor(units=[]) {
         this.units = {};
         for (let unit of units) {
@@ -400,10 +533,20 @@ class GameUnitLibrary {
         }
     }
     
+    /**
+     * Pushes the unit into the library.
+     * @param {GameUnitAbility} unit - unit to add to the library
+     */
     push(unit) {
         this.units[unit.id] = unit;
     }
     
+    /**
+     * Builds the library from DOTAPEDIA.
+     * @param {string[]} [ids=null] - string IDs to include in the library from
+     *  DOTAPEDIA. If null, all units are included.
+     * @return {GameUnitLibrary} library built from DOTAPEDIA
+     */
     static from_dotapedia(ids=null) {
         var library = new GameUnitLibrary();
         var unit;
@@ -418,6 +561,12 @@ class GameUnitLibrary {
         return library;
     }
     
+    /**
+     * Builds the HTML for the entire ability/item tooltip.
+     * @param {string} id - dotapedia integer ID of the ability/item
+     * @param {string|int} [level=null] - integer level of the ability/item
+     * @return {string} complete HTML tooltip for the requested ability/item
+     */
     html(id, level=null) {
         if (this.units.hasOwnProperty(id)) {
             return this.units[id].html(level);
@@ -427,6 +576,13 @@ class GameUnitLibrary {
         }
     }
     
+    
+    /**
+     * Builds the HTML for the entire set of talents.
+     * @param {string[]} ids - dotapedia talent integer IDs of the talents, from bottom-left to top-right
+     * @param {string[]|int[]} [levels=[]] - integer levels {0|1} of the talents
+     * @return {string} complete HTML tooltip for the requested talents
+     */
     html_talents(ids, levels=[]) {
         var output = '<table class="talent">';
         var left;

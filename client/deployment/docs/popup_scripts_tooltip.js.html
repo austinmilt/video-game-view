@@ -27,6 +27,7 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
+ * @license Apache-2.0
  * Copyright 2018 Austin Walker Milt
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,19 +42,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+ 
+/**
+ * @file Classes for VGV's custom tooltips including simple help tooltips
+ * as well as handling more complex behavior in the viewer's tooltips.
+ * @author [Austin Milt]{@link https://github.com/austinmilt}
+*/
 
+/**
+ * @description DOM element attribute name of the containing element for a static tooltip
+ * @constant
+ * @default
+ */
 const ATTR_ADDTO = 'vgvtt_addto';
+
+/** 
+ * @description DOM element attribute name of the tooltip HTML for a static tooltip
+ * @constant
+ * @default
+ */
 const ATTR_TT = 'vgvtt_html';
+
+/** 
+ * @description DOM element attribute name of the additional styling classes for a static tooltip
+ * @constant
+ * @default
+ */
 const ATTR_CLASSES = 'vgvtt_class';
+
 const CLASS_TT = 'vgvtt';
 const TT_HTMLTYPE ='div';
-
 const TMPL_TEXT_NODE_TYPE = 3;
 const TMPL_ATTR_TID = 'vgvtt_tid';
 const TMPL_CHILD_TYPE = 'span';
 
+
+/**
+ * Base class for VGV's custom tooltips. The basic features of a VGVTooltip
+ * are that (1) they work by explicitly adding/removing a div to the DOM, (2)
+ * these are not (necessarily) the child element of the element they tooltip, 
+ * (3) they can be positioned relative to the mouse or to the tooltipped element
+ */
 class VGVTooltip {
     
+    /**
+     * Creates a VGVTooltip.
+     * @param {DOMElement} element - DOM element that the tooltip describes
+     * @param {DOMElement} container - DOM element that the tooltip's element will be a child of
+     * @param {string} [html=''] - starting HTML to give the tooltip's element
+     * @param {string[]} [cssClasses=[]] - additional styling classes for the tooltip element
+     * @param {object} [posBy={by:'mouse'}] - how the tooltip should be positioned;
+     *      can have args {by:'mouse'|'element', direction:'north'|'south'|'east'|'west'}
+     * @param {boolean} [sticky=false] - if true, clicking [element] will cause
+     *      tooltip to remain visible even when not hovered
+     */
     constructor(element, container, html, cssClasses, posBy, sticky) {
         
         // update defaults and check args
@@ -80,18 +122,48 @@ class VGVTooltip {
         element._vgvtt_ = this;
         this._e_ = element;
         this._c_ = container;
+        
+        /** Displays/shows the tooltip by adding to the DOM.*/
         this.display = function(event) { self._display(self, event); }
+        
+        /** Hides the tooltip (by removing from the DOM).*/
         this.hide = function(event) { self._hide(self); }
+        
+        /** Toggles the visible state of the tooltip (calls {@link hide} or {@link display}.*/
         this.toggle_display = function(event) { self._toggle_display(self, event); }
+        
+        /** Sticks the tooltip if it is sticky (usually dont call directly).*/
         this.stick = function(event) { self._stick(self); }
+        
+        /** Unsticks the tooltip if it is sticky (usually dont call directly).*/
         this.unstick = function(event) { self._unstick(self); }
+        
+        /** Toggles the stuck state of the tooltip (calls {@link stick} or {@link unstick}; usually dont call directly).*/
         this.toggle_stuck = function(event) { self._toggle_stuck(self); }
+        
+        /** Enables the tooltip to be displayed.*/
         this.enable = function() { self._enable(self); }
+        
+        /** Prevents the tooltip from being displayed.*/
         this.disable = function() { self._disable(self); }
+        
+        /** Removes the tooltip element from the DOM, removes listeners, and unsets the tooltip data.*/
         this.remove = function() { self._remove(self); }
+        
+        /**
+         * Sets the HTML of the tooltip element.
+         * @param {string} h - HTML to give the tooltip
+         * @param {string} [c=undefined] - child DOM ID in the tooltip to set the HTML of
+         */
         this.set_html = function(h, c) { self._set_html(self, h, c); }
+        
+        /** Iteratively calls {@link set_html} on an array of (id, html) pairs.*/
         this.set_htmls = function(h) { self._set_htmls(self, h); }
+        
+        /** Sets the tooltip position using the mouse.*/
         this.set_position_by_mouse = function(event) { self._set_position_by_mouse(self, event); }
+        
+        /** Sets the tooltip position based on the hovering element.*/
         this.set_pos_by_element = function() { self._set_pos_by_element(self, self.rel.direction); }
         
         // add the tooltip listeners to display and hide
@@ -294,7 +366,10 @@ class VGVTooltip {
 }
 
 
-// a tooltip that displays the innerText of its tooltip element
+/**
+ * A tooltip that displays the innerText of its hovering element.
+ * @extends VGVTooltip
+ */
 class VGVIdentityTooltip extends VGVTooltip {
     
     constructor(element, container, cssClasses) {
@@ -308,6 +383,7 @@ class VGVIdentityTooltip extends VGVTooltip {
 
 // holds info about an element in a template without immediately constructing
 // the html or setting up the hierarchy
+// CURRENTLY UNUSED AND UNSUPPORTED
 class VGVTemplateElement {
     constructor(tag, tid, html, styles, attributes) {
         if (!tid) { tid = null; }
@@ -355,6 +431,7 @@ class VGVTemplateElement {
 
 // a tooltip built from a template that updates individual elements instead
 // of the whole html
+// CURRENTLY UNUSED AND UNSUPPORTED
 class VGVTemplateTooltip {
     
     constructor(templateHierarchy) {
@@ -462,8 +539,15 @@ class VGVTemplateTooltip {
 }
 
 
-
-// function to build tooltips in a static html
+/**
+ * Builds static tooltips in the DOM. 
+ * &lt;ul>
+ *      &lt;li>This function is called when tooltip.js is included in a page.&lt;/li>
+ *      &lt;li>To work correctly, the HTML for an element that is to be tooltipped must 
+ *          have attributes {@link ATTR_ADDTO}, {@link ATTR_TT},
+ *          and {@link ATTR_CLASSES}&lt;/li>
+ * &lt;/ul>
+ */
 function build_static_tooltips() {
     var elementsWithTooltips = document.querySelectorAll('[' + ATTR_TT + ']');
     for (var i = 0; i &lt; elementsWithTooltips.length; i++) {
@@ -510,13 +594,13 @@ function test_templating() {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ABILITY_STATES">ABILITY_STATES</a></li><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#connectAttempts">connectAttempts</a></li><li><a href="global.html#dataDiv">dataDiv</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#TOOLTIPS">TOOLTIPS</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AbilitiesATE.html">AbilitiesATE</a></li><li><a href="AbilityBox.html">AbilityBox</a></li><li><a href="AgilityATE.html">AgilityATE</a></li><li><a href="AvatarBox.html">AvatarBox</a></li><li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li><li><a href="AvatarTooltipHTML.html">AvatarTooltipHTML</a></li><li><a href="BaseDescriptor.html">BaseDescriptor</a></li><li><a href="CooldownDescriptor.html">CooldownDescriptor</a></li><li><a href="CostDescriptor.html">CostDescriptor</a></li><li><a href="CSATE.html">CSATE</a></li><li><a href="DamageATE.html">DamageATE</a></li><li><a href="DescriptionDescriptor.html">DescriptionDescriptor</a></li><li><a href="DetailDescriptor.html">DetailDescriptor</a></li><li><a href="DetailsDescriptor.html">DetailsDescriptor</a></li><li><a href="ExperienceATE.html">ExperienceATE</a></li><li><a href="GameUnitAbility.html">GameUnitAbility</a></li><li><a href="GameUnitLibrary.html">GameUnitLibrary</a></li><li><a href="GoldATE.html">GoldATE</a></li><li><a href="HealthATE.html">HealthATE</a></li><li><a href="HeroATE.html">HeroATE</a></li><li><a href="HeroTime.html">HeroTime</a></li><li><a href="HeroTimeSet.html">HeroTimeSet</a></li><li><a href="HoverBox.html">HoverBox</a></li><li><a href="IntelligenceATE.html">IntelligenceATE</a></li><li><a href="ItemBox.html">ItemBox</a></li><li><a href="ItemsATE.html">ItemsATE</a></li><li><a href="KDAATE.html">KDAATE</a></li><li><a href="LevelATE.html">LevelATE</a></li><li><a href="LoreDescriptor.html">LoreDescriptor</a></li><li><a href="ManaATE.html">ManaATE</a></li><li><a href="ManaCostDescriptor.html">ManaCostDescriptor</a></li><li><a href="NameDescriptor.html">NameDescriptor</a></li><li><a href="NetWorthATE.html">NetWorthATE</a></li><li><a href="NoteDescriptor.html">NoteDescriptor</a></li><li><a href="OrderedHeroTimes.html">OrderedHeroTimes</a></li><li><a href="ScepterDescriptor.html">ScepterDescriptor</a></li><li><a href="ScepterModsDescriptor.html">ScepterModsDescriptor</a></li><li><a href="SpeedATE.html">SpeedATE</a></li><li><a href="StrengthATE.html">StrengthATE</a></li><li><a href="TAIATE.html">TAIATE</a></li><li><a href="TalentBox.html">TalentBox</a></li><li><a href="TalentsATE.html">TalentsATE</a></li><li><a href="VGVIdentityTooltip.html">VGVIdentityTooltip</a></li><li><a href="VGVTooltip.html">VGVTooltip</a></li></ul><h3>Global</h3><ul><li><a href="global.html#activate">activate</a></li><li><a href="global.html#activate_result">activate_result</a></li><li><a href="global.html#activate_tooltips">activate_tooltips</a></li><li><a href="global.html#add_tracker">add_tracker</a></li><li><a href="global.html#ATTR_ADDTO">ATTR_ADDTO</a></li><li><a href="global.html#ATTR_CLASSES">ATTR_CLASSES</a></li><li><a href="global.html#ATTR_TT">ATTR_TT</a></li><li><a href="global.html#build_static_tooltips">build_static_tooltips</a></li><li><a href="global.html#clear_boxes">clear_boxes</a></li><li><a href="global.html#close_tooltips_but">close_tooltips_but</a></li><li><a href="global.html#connect">connect</a></li><li><a href="global.html#CONNECT_INTERVAL">CONNECT_INTERVAL</a></li><li><a href="global.html#create_hero_timer">create_hero_timer</a></li><li><a href="global.html#create_tooltip_library">create_tooltip_library</a></li><li><a href="global.html#deactivate_tooltips">deactivate_tooltips</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#get_option_values">get_option_values</a></li><li><a href="global.html#get_user_request_info">get_user_request_info</a></li><li><a href="global.html#initialize_boxes">initialize_boxes</a></li><li><a href="global.html#inject_css">inject_css</a></li><li><a href="global.html#inject_js">inject_js</a></li><li><a href="global.html#inject_scripts">inject_scripts</a></li><li><a href="global.html#InvalidDescriptionError">InvalidDescriptionError</a></li><li><a href="global.html#InvalidTimeError">InvalidTimeError</a></li><li><a href="global.html#kill_all_running_jobs">kill_all_running_jobs</a></li><li><a href="global.html#load_result">load_result</a></li><li><a href="global.html#make_request">make_request</a></li><li><a href="global.html#menu_forum">menu_forum</a></li><li><a href="global.html#menu_mainsite">menu_mainsite</a></li><li><a href="global.html#menu_options">menu_options</a></li><li><a href="global.html#menu_sample">menu_sample</a></li><li><a href="global.html#menu_start">menu_start</a></li><li><a href="global.html#N_TALENTS">N_TALENTS</a></li><li><a href="global.html#nested_to_separate">nested_to_separate</a></li><li><a href="global.html#open_correct_page">open_correct_page</a></li><li><a href="global.html#open_menu">open_menu</a></li><li><a href="global.html#open_tracker">open_tracker</a></li><li><a href="global.html#parse_replay_start">parse_replay_start</a></li><li><a href="global.html#PING_INTERVAL">PING_INTERVAL</a></li><li><a href="global.html#PONG_TIMEOUT">PONG_TIMEOUT</a></li><li><a href="global.html#post_request_to_background">post_request_to_background</a></li><li><a href="global.html#post_to_port">post_to_port</a></li><li><a href="global.html#post_to_ports">post_to_ports</a></li><li><a href="global.html#refresh_all">refresh_all</a></li><li><a href="global.html#remove_job">remove_job</a></li><li><a href="global.html#remove_tracker">remove_tracker</a></li><li><a href="global.html#restore_options">restore_options</a></li><li><a href="global.html#save_options">save_options</a></li><li><a href="global.html#send_request">send_request</a></li><li><a href="global.html#set_option_values">set_option_values</a></li><li><a href="global.html#set_popup_state">set_popup_state</a></li><li><a href="global.html#set_status_led">set_status_led</a></li><li><a href="global.html#socket_closed">socket_closed</a></li><li><a href="global.html#socket_closed_by_user">socket_closed_by_user</a></li><li><a href="global.html#socket_connecting">socket_connecting</a></li><li><a href="global.html#socket_opened">socket_opened</a></li><li><a href="global.html#socket_reconnecting">socket_reconnecting</a></li><li><a href="global.html#split_abilities_talents">split_abilities_talents</a></li><li><a href="global.html#start_viewer">start_viewer</a></li><li><a href="global.html#start_ws">start_ws</a></li><li><a href="global.html#stop_ws">stop_ws</a></li><li><a href="global.html#tell_connection_state">tell_connection_state</a></li><li><a href="global.html#tell_popup_state">tell_popup_state</a></li><li><a href="global.html#tell_tracker_state">tell_tracker_state</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#update_connection_dependents">update_connection_dependents</a></li><li><a href="global.html#update_container">update_container</a></li><li><a href="global.html#update_general">update_general</a></li><li><a href="global.html#update_shorts">update_shorts</a></li><li><a href="global.html#update_tracker">update_tracker</a></li><li><a href="global.html#user_disconnect">user_disconnect</a></li><li><a href="global.html#WebSocketClient">WebSocketClient</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Feb 26 2018 14:59:48 GMT-0500 (Haiti Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Feb 27 2018 14:44:19 GMT-0500 (Haiti Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

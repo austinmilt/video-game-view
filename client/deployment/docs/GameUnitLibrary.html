@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: IntelligenceATE</title>
+    <title>JSDoc: Class: GameUnitLibrary</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: IntelligenceATE</h1>
+    <h1 class="page-title">Class: GameUnitLibrary</h1>
 
     
 
@@ -28,9 +28,9 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>IntelligenceATE<span class="signature">()</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>GameUnitLibrary<span class="signature">(units<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h2>
         
-            <div class="class-description">Hero intelligence element.</div>
+            <div class="class-description">Container and HTML handler for all abilities and item tooltips.</div>
         
     
 </header>
@@ -45,7 +45,7 @@
     
 
     
-    <h4 class="name" id="IntelligenceATE"><span class="type-signature"></span>new IntelligenceATE<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="GameUnitLibrary"><span class="type-signature"></span>new GameUnitLibrary<span class="signature">(units<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
     
 
     
@@ -53,7 +53,7 @@
 
 
 <div class="description">
-    Creates a IntelligenceATE.
+    Creates a GameUnitLibrary.
 </div>
 
 
@@ -62,6 +62,75 @@
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>units</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;<a href="GameUnitAbility.html">GameUnitAbility</a>></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    []
+                
+                </td>
+            
+
+            <td class="description last">library units to put in the library</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -97,7 +166,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="page_scripts_tooltip_manager.js.html">page/scripts/tooltip_manager.js</a>, <a href="page_scripts_tooltip_manager.js.html#line872">line 872</a>
+        <a href="page_scripts_game_unit.js.html">page/scripts/game_unit.js</a>, <a href="page_scripts_game_unit.js.html#line523">line 523</a>
     </li></ul></dd>
     
 
@@ -129,17 +198,6 @@
     </div>
 
     
-        <h3 class="subsection-title">Extends</h3>
-
-        
-
-
-    <ul>
-        <li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li>
-    </ul>
-
-
-    
 
     
 
@@ -162,101 +220,7 @@
     
 
     
-    <h4 class="name" id="check_update"><span class="type-signature"></span>check_update<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="AvatarTooltipElement.html#check_update">AvatarTooltipElement#check_update</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="page_scripts_tooltip_manager.js.html">page/scripts/tooltip_manager.js</a>, <a href="page_scripts_tooltip_manager.js.html#line878">line 878</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="AvatarTooltipElement.html">AvatarTooltipElement</a></li>
-        </ul>
-    </dd>
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="get_listeners"><span class="type-signature"></span>get_listeners<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".from_dotapedia"><span class="type-signature">(static) </span>from_dotapedia<span class="signature">(ids<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="GameUnitLibrary.html">GameUnitLibrary</a>}</span></h4>
     
 
     
@@ -264,98 +228,7 @@
 
 
 <div class="description">
-    Gets any addiitonal listeners this element needs started in orderfor the user to interact or otherwise function.
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-    <dt class="inherited-from">Inherited From:</dt>
-    <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="AvatarTooltipElement.html#get_listeners">AvatarTooltipElement#get_listeners</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="page_scripts_tooltip_manager.js.html">page/scripts/tooltip_manager.js</a>, <a href="page_scripts_tooltip_manager.js.html#line638">line 638</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="handler"><span class="type-signature"></span>handler<span class="signature">(value)</span><span class="type-signature"> &rarr; {string}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Gets the display HTML for this element.
+    Builds the library from DOTAPEDIA.
 </div>
 
 
@@ -379,7 +252,11 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -391,23 +268,39 @@
 
         <tr>
             
-                <td class="name"><code>value</code></td>
+                <td class="name"><code>ids</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;float></span>
+<span class="param-type">Array.&lt;string></span>
 
 
             
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
             
 
-            <td class="description last">[base, total, bonus] int(elligence)</td>
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">string IDs to include in the library from DOTAPEDIA. If null, all units are included.</td>
         </tr>
 
     
@@ -427,11 +320,6 @@
 
     
 
-    
-    <dt class="tag-overrides">Overrides:</dt>
-    <dd class="tag-overrides"><ul class="dummy"><li>
-        <a href="AvatarTooltipElement.html#handler">AvatarTooltipElement#handler</a>
-    </li></ul></dd>
     
 
     
@@ -453,7 +341,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="page_scripts_tooltip_manager.js.html">page/scripts/tooltip_manager.js</a>, <a href="page_scripts_tooltip_manager.js.html#line885">line 885</a>
+        <a href="page_scripts_game_unit.js.html">page/scripts/game_unit.js</a>, <a href="page_scripts_game_unit.js.html#line550">line 550</a>
     </li></ul></dd>
     
 
@@ -480,7 +368,222 @@
 
         
 <div class="param-desc">
-    HTML of hero's intelligence
+    library built from DOTAPEDIA
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="GameUnitLibrary.html">GameUnitLibrary</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="html"><span class="type-signature"></span>html<span class="signature">(id, level<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Builds the HTML for the entire ability/item tooltip.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">dotapedia integer ID of the ability/item</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>level</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last">integer level of the ability/item</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="page_scripts_game_unit.js.html">page/scripts/game_unit.js</a>, <a href="page_scripts_game_unit.js.html#line570">line 570</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    complete HTML tooltip for the requested ability/item
 </div>
 
 
@@ -509,7 +612,7 @@
     
 
     
-    <h4 class="name" id="remove"><span class="type-signature"></span>remove<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="html_talents"><span class="type-signature"></span>html_talents<span class="signature">(ids, levels<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {string}</span></h4>
     
 
     
@@ -517,7 +620,7 @@
 
 
 <div class="description">
-    Attempts to remove the DOMElement from the DOM.
+    Builds the HTML for the entire set of talents.
 </div>
 
 
@@ -526,6 +629,113 @@
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ids</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">dotapedia talent integer IDs of the talents, from bottom-left to top-right</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>levels</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+|
+
+<span class="param-type">Array.&lt;int></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    []
+                
+                </td>
+            
+
+            <td class="description last">integer levels {0|1} of the talents</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -538,11 +748,6 @@
 
     
 
-    
-    <dt class="inherited-from">Inherited From:</dt>
-    <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="AvatarTooltipElement.html#remove">AvatarTooltipElement#remove</a>
-    </li></ul></dd>
     
 
     
@@ -566,7 +771,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="page_scripts_tooltip_manager.js.html">page/scripts/tooltip_manager.js</a>, <a href="page_scripts_tooltip_manager.js.html#line641">line 641</a>
+        <a href="page_scripts_game_unit.js.html">page/scripts/game_unit.js</a>, <a href="page_scripts_game_unit.js.html#line586">line 586</a>
     </li></ul></dd>
     
 
@@ -589,6 +794,28 @@
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    complete HTML tooltip for the requested talents
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -600,7 +827,7 @@
     
 
     
-    <h4 class="name" id="update"><span class="type-signature"></span>update<span class="signature">(value, force)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="push"><span class="type-signature"></span>push<span class="signature">(unit)</span><span class="type-signature"></span></h4>
     
 
     
@@ -608,7 +835,7 @@
 
 
 <div class="description">
-    Updates the value and HTML of this element if conditions are met.
+    Pushes the unit into the library.
 </div>
 
 
@@ -634,8 +861,6 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -646,13 +871,13 @@
 
         <tr>
             
-                <td class="name"><code>value</code></td>
+                <td class="name"><code>unit</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Object</span>
+<span class="param-type"><a href="GameUnitAbility.html">GameUnitAbility</a></span>
 
 
             
@@ -661,41 +886,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">new value this element should take</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>force</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">force updating regardless of detected changes</td>
+            <td class="description last">unit to add to the library</td>
         </tr>
 
     
@@ -713,11 +905,6 @@
 
     
 
-    
-    <dt class="inherited-from">Inherited From:</dt>
-    <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="AvatarTooltipElement.html#update">AvatarTooltipElement#update</a>
-    </li></ul></dd>
     
 
     
@@ -741,7 +928,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="page_scripts_tooltip_manager.js.html">page/scripts/tooltip_manager.js</a>, <a href="page_scripts_tooltip_manager.js.html#line619">line 619</a>
+        <a href="page_scripts_game_unit.js.html">page/scripts/game_unit.js</a>, <a href="page_scripts_game_unit.js.html#line540">line 540</a>
     </li></ul></dd>
     
 
