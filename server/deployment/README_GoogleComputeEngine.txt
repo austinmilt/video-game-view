@@ -1,11 +1,19 @@
 SERVER SETUP INSTRUCTIONS
 -------------------------------------------------------------------------------
+################################################################################
+CAN TRY RUNNING initial_setup.sh. Be sure to convert to UNIX version first.
+    sudo apt-get install dos2unix -y
+    dos2unix initial_setup.sh
+    chmod u+x initial_setup.sh
+    sudo ./initial_setup.sh
+################################################################################
+
 A. Create an Ubuntu Compute Engine Instance
 
 B. Install and test a basic Tornado server
     >> sudo apt-get update -y
     >> sudo apt-get upgrade -y
-    >> sudo apt-get install python-pip && sudo pip install --update pip
+    >> sudo apt-get install python-pip && sudo pip install --upgrade pip
     >> sudo pip install tornado
     >> sudo pip install google-cloud-storage
     >> sudo nano test.py
