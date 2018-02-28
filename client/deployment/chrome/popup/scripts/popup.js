@@ -718,7 +718,15 @@ function activate_result(longID, videoURL, videoTitle) {
         tracker.innerText = 'Ready. View ' + videoTitle;
         tracker.classList.add(...MESSAGE_CLASS[TYPE_RESULT]);
         tracker.addEventListener("click", function(e){
-            port.postMessage({'action': 'start_viewer', 'job': longID});
+            chrome.tabs.query(
+                { active:true, windowType:"normal", currentWindow: true }, 
+                function(tabs){ 
+                    port.postMessage({
+                        'action': 'start_viewer', 'job': longID, 
+                        'tab': tabs[0].id
+                    });
+                }
+            )
         }, false);
     }
 }

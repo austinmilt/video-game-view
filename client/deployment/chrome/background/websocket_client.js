@@ -652,26 +652,24 @@ function activate(msg) {
  * Activates the VGV viewer in the current tab.
  * @param {string} longID - job/request ID to activate
  */
-function start_viewer(longID) {
+function start_viewer(longID, tabID) {
     var videoURL = state[longID]['url'];
-    chrome.tabs.query({currentWindow: true, active: true}, function (tab) {
+    
+    // navigate to the requested video
+    chrome.tabs.update(tabID, {url: videoURL}, function(tab) {
         
-        // navigate to the requested video
-        chrome.tabs.update(tab.id, {url: videoURL}, function(tab) {
-            
-            // add a listener that will activate the viewer when scripts have been injected
-            var listener = function(tabId, changeInfo, tab) {
-                if ((tabId == tab.id) && (changeInfo.status == 'complete')) {
-                    chrome.tabs.onUpdated.removeListener(listener);
-                    inject_scripts()
-                    .then(function(){return activate({trigger: 'activate_master', data: longID})})
-                    .then(function(){return activate({trigger: 'activate_tooltips'})})
-                    .then(function(v) {console.log(v)}, null)
-                    .catch(function(rejection) { console.log('Rejection:'); console.log(rejection); });
-                }
+        // add a listener that will activate the viewer when scripts have been injected
+        var listener = function(tabId2, changeInfo, tab2) {
+            if ((tabId2 == tabID) && (changeInfo.status == 'complete')) {
+                chrome.tabs.onUpdated.removeListener(listener);
+                inject_scripts()
+                .then(function(){return activate({trigger: 'activate_master', data: longID})})
+                .then(function(){return activate({trigger: 'activate_tooltips'})})
+                .then(function(v) {console.log(v)}, null)
+                .catch(function(rejection) { console.log('Rejection:'); console.log(rejection); });
             }
-            chrome.tabs.onUpdated.addListener(listener);
-        });
+        }
+        chrome.tabs.onUpdated.addListener(listener);
     });
 }
 
@@ -704,7 +702,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         else if (msg.action == 'get_popup_state') { tell_popup_state(port); }
         else if (msg.action == 'set_popup_state') { set_popup_state(msg.state); }
         else if (msg.action == 'remove_job') { remove_job(msg.job); }
-        else if (msg.action == 'start_viewer') { start_viewer(msg.job); }
+        else if (msg.action == 'start_viewer') { start_viewer(msg.job, msg.tab); }
         else { post_to_port(port, {mesage: 'Background page received uknown action from popup; see background console for details.'}); console.log(msg); }
     });
     
