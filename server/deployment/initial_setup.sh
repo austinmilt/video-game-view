@@ -31,6 +31,7 @@ sudo apt-get update -y || error_exit "$LINENO: Unable to update system."
 sudo apt-get upgrade -y || error_exit "$LINENO: Unable to upgrade system."
 sudo apt-get install pkg-config || error_exit "$LINENO: Unable to install package manager."
 sudo apt-get install cmake || error_exit "$LINENO: Unable to install cmake."
+sudo apt-get install dos2unix -y || error_exist "$LINENO: Unable to install dos2unix."
 
 echo; echo; echo "// INSTALLING SERVER PACKAGES ///////////////////////////////////////////"
 sudo apt-get install python-pip -y || error_exit "$LINENO: Unable to install pip."
@@ -41,6 +42,7 @@ sudo pip install youtube-dl || error_exit "$LINENO: Unable to install youtube-dl
 
 echo; echo; echo "// CREATING TORNADO SERVER //////////////////////////////////////////////"
 sudo apt-get install upstart -y || error_exit "$LINENO: Unable to install upstart (server service manager)."
+sudo dos2unix $SERVER_STARTSCRIPT || error_exit "$LINENO: Unable to convert server start script to unix type."
 sudo chmod u+x $SERVER_STARTSCRIPT || error_exit "$LINENO: Unable to make server service executable."
 sudo cp $SERVER_SERVICE $UPSTART_SDIR || error_exit "$LINENO: Unable to copy server service script to appropriate directory."
 sudo systemctl start vgv || error_exit "$LINENO: Unable to start VGV service."

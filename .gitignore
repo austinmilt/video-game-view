@@ -8,6 +8,7 @@ server/deployment/java
 server/video_processing/lib
 server/replay_processing/docs
 server/*/out
+server/ssl_cert
 unused
 client/deployment/chrome.zip
 client/deployment/marketing

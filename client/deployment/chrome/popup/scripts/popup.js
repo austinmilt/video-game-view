@@ -396,7 +396,7 @@ function make_request() {
                     chrome.tabs.sendMessage(tabs[0].id, {trigger: 'get_request_data'}, function(response) {
                         var e = chrome.runtime.lastError;
                         if (e !== undefined){ console.log('Failed to query request script with error: ' + e.message); }
-                        if (response['type'] == 'error') { console.log(response['message']); }
+                        if (response['type'] == 'error') { alert(response['message']); }
                         else if (response['type'] == 'result') {
                             
                             // if some replay info is missing, prompt the user
