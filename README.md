@@ -30,7 +30,7 @@ This repository contains both the server and client code for Video Game View (VG
 
 ## Getting Started
 ### Users
-For those who want to use the client, you can download it as a [Google Chrome extension](https://chrome.google.com/webstore/detail/video-game-view/kkpfabidigmnbgabaihhnfiphccgcbgc?authuser=0).
+For those who want to use the client, you can download it as a [Google Chrome extension](https://chrome.google.com/webstore/detail/video-game-view/kkpfabidigmnbgabaihhnfiphccgcbgc).
 
 ### Content Creators (Youtube)
 #### Minimum Requirements
