@@ -449,20 +449,23 @@ function stop_ws() {
  * @param {string} - video url
  * @param {array} - replays with start time and replay url (or match ID), @see popup.js
  * @param {string} - title of the video (just to be stored for viewing in popup)
+ * @param {string} - unique ID of the video (used for storing/querying results in the VGV database)
  */
-function send_request(video, replays, title) {
+function send_request(video, replays, title, videoID) {
     if (CLIENT) {
         var request = {
             'type': 'request',
             'video': video,
             'replays': replays,
             'request_id': Math.floor(Math.random()*10000000000),
-            'interval': frameInterval
+            'interval': frameInterval,
+            'id': videoID
             // 'type': 'request', 
             // 'video': 'https://youtu.be/gYwr7SK72PY',
             // 'replays': [[0.0, 'https://www.dropbox.com/s/achxrbapg6spnlu/replay_r01.dem?dl=1']],
             // 'request_id': Math.floor(Math.random()*10000000000)
         };
+        console.log(request);
         CLIENT.socket.send(JSON.stringify(request));
         requestID = request['request_id'];
         state['id_order'].push(requestID);
@@ -694,7 +697,7 @@ chrome.runtime.onConnect.addListener(function(port) {
     // add a listener for requests, deletions of results, or
     // termination of the socket
     port.onMessage.addListener(function(msg) {
-        if (msg.action == 'request') { send_request(msg.video, msg.replays, msg.title); }
+        if (msg.action == 'request') { send_request(msg.video, msg.replays, msg.title, msg.id); }
         else if (msg.action == 'connect') { start_ws(); }
         else if (msg.action == 'user_disconnect') { stop_ws(); }
         else if (msg.action == 'get_connection_state') { tell_connection_state(port); }

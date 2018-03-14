@@ -148,18 +148,21 @@ def _pg_(msg):
     sys.stdout.write('\n' + msg)
     sys.stdout.flush()
     
+    
+    
 # ~~ Job ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 class Job:
     
-    def __init__(self, videoFile, replayFiles=None, keyFile=None, skip=None):
+    def __init__(self, videoFile=None, replayFiles=None, keyFile=None, skip=None):
         """
         This class is used to process videos and replay files to package match
         data at regular intervals for the client to view.
         
         Args:
-            videoFile (str): path to video file to process
+            videoFile (str): (optional if building a non-running job [i.e. if 
+                getting remote results]) path to video file to process
             
-            replayFiles (list): nested list; each element corresponds to the
+            replayFiles (list): (optional ) nested list; each element corresponds to the
                 starting time and file associated with the replay, i.e.
                 [[start_1, replay_1], [start_2, replay_2]... ]
                 
@@ -172,7 +175,9 @@ class Job:
                 video_parser.parse_skip_default
                 
         """
-        assert os.path.exists(videoFile), 'Cannot locate video file.'
+        if videoFile is not None:
+            assert os.path.exists(videoFile), 'Cannot locate video file.'
+            
         if replayFiles is None: replayFiles = []
         for _, replayFile in replayFiles:
             assert os.path.exists(replayFile), 'Cannot locate replay file %s' % replayFile
@@ -190,6 +195,7 @@ class Job:
         self.keys = {}
         self.results = None
         self.valid = None
+        self.remoteInfo = None
         
         
     def __repr__(self):
@@ -217,6 +223,10 @@ class Job:
         """
         import cPickle, bz2
         from uuid import uuid4
+        
+        # dont run if there's no video
+        if self._v is None:
+            raise RuntimeError('No video to process. Create a new job with the video path.')
         
         # try loading the mapping from npc_dota name to regular name
         if os.path.exists(self._k):
@@ -293,7 +303,9 @@ class Job:
                 
         
     @staticmethod
-    def from_urls(videoURL, replays=None, keyFile=None, skip=None, quality=None, verbose=False):
+    def from_urls(
+        videoURL, replays=None, keyFile=None, skip=None, quality=None, 
+        verbose=False, videoID=None):
         """
         Constructs a new Job by downloading files instead of directly from 
         files on disk.
@@ -315,6 +327,9 @@ class Job:
             
             verbose (boolean): whether or not to be verbose with output
             
+            videoID (str): unique Youtube video ID used to check if the video
+                has already been processed and is available on the database
+            
         Returns:
             Job: job constructed from downloadedurls instead of files
             
@@ -323,6 +338,21 @@ class Job:
             from urlparse import urlparse
             if replays is None: replays = []
             if quality is None: quality = OPTIONS.JB.QUALITY
+            
+            # check if the video has been processed at the request quality
+            # (or better) and the results are available on the vgv database.
+            # If so, send those results to the user instead of reprocessing
+            # the whole thing.
+            hasReplays = {True: '1', False: '0'}.get(len(replays) > 0)
+            if videoID is not None:
+                if verbose: _pg_('Checking if the video has already been processed.')
+                remoteResults = get_remote_results(videoID, quality, skip, hasReplays, True)
+                if remoteResults:
+                    job = Job()
+                    job.results = remoteResults
+                    return job
+            
+            # otherwise, download the video and setup for processing
             if verbose: _pg_('Downloading video %s with requested quality %0.0f' % (videoURL, quality))
             videoFile = download_youtube_video(videoURL, quality=quality)
             temp = []
@@ -343,10 +373,15 @@ class Job:
                 replayFiles.append([time, replayFile])
             
             if verbose: _pg_('Building job.')
-            return Job(videoFile, replayFiles, keyFile, skip)
+            job = Job(videoFile, replayFiles, keyFile, skip)
+            job.remoteInfo = {
+                'skip': skip, 'quality': quality, 'id': videoID, 
+                'has_replays': hasReplays
+            }
+            return job
             
         except Exception as e:
-            _pg_(e.message)
+            _pg_(str(e.message))
             raise e
         
         
@@ -363,6 +398,9 @@ class JobResults:
             job (Job): job to summarize
             
         """
+        from google.cloud import storage
+        from uuid import uuid4
+        import gzip, threading
         assert job.video is not None, 'Job has not been run yet.'
         assert job.replays is not None, 'Job has not been run yet.'
         self.job = job
@@ -432,6 +470,23 @@ class JobResults:
             })
             vidTime += self.job.skip
             
+        # upload results to the VGV database
+        if OPTIONS.JB.UPLOAD_NEW_RESULTS and (self.job.remoteInfo['id'] is not None):
+            gcpClient = storage.Client.from_service_account_json(OPTIONS.JB.CRED)
+            gcpBucket = gcpClient.get_bucket(OPTIONS.JB.RESULTS_BUCKET)
+            remoteFile = construct_results_filename(self.job.remoteInfo['id'])
+            temp = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+            with gzip.open(temp, 'wb') as f: f.write(self.as_json_string())
+            def upload():
+                blob = gcpBucket.blob(remoteFile)
+                blob.metadata = self.job.remoteInfo
+                blob.upload_from_filename(temp)
+                try: os.remove(temp)
+                except: print 'Unable to delete temporary file %s' % temp
+                
+            thread = threading.Thread(target=upload)
+            thread.start()
+            
             
     def __repr__(self):
         return '<JobResults of %s>' % str(self.job)
@@ -478,6 +533,79 @@ class JobResults:
 # ########################################################################### #
 # ## HELPER FUNCTIONS ####################################################### #
 # ########################################################################### #
+
+# ~~ construct_results_filename() ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+def construct_results_filename(videoID):
+    """
+    Constructs a results filename for upload to the VGV database.
+    
+    Args:
+        videoID (str): Youtube video unique ID, i.e. the associated 11-key tag in the URL
+            
+    Returns:
+        str: constructed filename for uploading to the database
+    """
+    from uuid import uuid4
+    return '%s_%s.gzip' % (str(videoID), str(uuid4()))
+    
+    
+# ~~ get_remote_results() ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+def get_remote_results(
+    videoID, requestedQuality, requestedSkip, requestHasReplays=False,
+    decompress=True
+):
+    """
+    Checks the VGV database to see if there are already results
+    sufficient to meet the request and downloads it if so.
+    
+    Args:
+        videoID: @see <code>construct_results_filename</code>
+        requestedQuality (int): requested video download/processing quality
+        requestedSkip (double): requested skip interval (in seconds)
+        hasReplays (boolean): results with replays preferred over those without;
+            defaults to False
+        decompress (boolean): downloaded results should be decompressed before
+            returning; defaults to True
+        
+    Returns:
+        str: path to to the downloaded file; None if no sufficient results were found
+    """
+    from uuid import uuid4
+    from google.cloud import storage
+    import os, gzip, shutil
+    
+    # short function for checking that an existing results file meets the 
+    # requested standard for this request
+    def meets_standard(b):
+        if float(b.metadata['skip']) > requestedSkip: return False
+        if float(b.metadata['quality']) < requestedQuality: return False
+        if requestHasReplays and (int(b.metadata['has_replays']) == 0): return False
+        return True
+            
+    # check for all results files that meet the requested standard and download the
+    # first such file
+    gcpClient = storage.Client.from_service_account_json(OPTIONS.JB.CRED)
+    gcpBucket = gcpClient.get_bucket(OPTIONS.JB.RESULTS_BUCKET)
+    bucketMatches = [b for b in gcpBucket.list_blobs(prefix=str(videoID)) if meets_standard(b)]
+    outfile = None
+    if len(bucketMatches) > 0:
+        blob = bucketMatches[0]
+        temp = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+        blob.download_to_filename(temp)
+        
+        # decompress the file before returning if requested
+        if decompress:
+            try:
+                outfile = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
+                with open(outfile, 'wb') as fOut, gzip.open(temp, 'rb') as fIn:
+                    shutil.copyfileobj(fIn, fOut)
+                    
+            finally:
+                try: os.remove(temp)
+                except: print 'Unable to delete temporary file %s' % temp
+        
+    return outfile
+    
     
 # ~~ download_youtube_video() ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ # 
 def download_youtube_video(url, outfile=None, quality=None):

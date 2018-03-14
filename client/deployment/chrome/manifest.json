@@ -4,7 +4,7 @@
     "name": "Video Game View",
     "short_name": "VGV",
     "description": "Displays a game-like HUD with updates on match information while watching recorded gameplay videos on your favorite platforms.",
-    "version": "1.0.5",
+    "version": "1.1.0",
 
     "browser_action": {
         "default_icon": "popup/assets/icon.png",

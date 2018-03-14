@@ -32,6 +32,20 @@
 const GRU_DESCRIPTION = 'description';
 
 /**
+ * @description DOM element class name of the page manager which has the video id as a tag
+ * @constant
+ * @default
+*/
+const GRU_VIDEOIDCLASS = 'ytd-page-manager';
+
+/**
+ * @description tag name of the unique video id (as found in the URL)
+ * @constant
+ * @default
+*/
+const GRU_VIDEOIDTAG = 'video-id';
+
+/**
  * @description tag for VGV info in the video description
  * @constant
  * @default
@@ -181,13 +195,21 @@ function get_video_title() {
 }
 
 
+/** @return {string} youtube video ID*/
+function get_video_id() {
+    return document.getElementsByClassName(GRU_VIDEOIDCLASS)[0].getAttribute(GRU_VIDEOIDTAG);
+}
+
+
 /** @return {object} data necessary for submitting a request to the server*/
 function get_request_data() {
     var video = get_video_url();
     var title = get_video_title();
+    var videoID = get_video_id();
     var data = {};
     data['video'] = video;
     data['title'] = title;
+    data['id'] = videoID;
     try {
         data['replays'] = get_replay_urls(); 
         if (data['replays'].length == 0) { data['replays'] = null; }
@@ -197,7 +219,7 @@ function get_request_data() {
             throw e;
         }
     }
-    
+
     return {'type': 'result', 'data': data};
 }
 

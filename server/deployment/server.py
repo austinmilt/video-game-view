@@ -68,6 +68,7 @@ MSG_KWD_REPLAYS = 'replays'
 MSG_KWD_REQID = 'request_id'
 MSG_KWD_INTERVAL = 'interval'
 MSG_KWD_QUALITY = 'quality'
+MSG_KWD_VIDEOID = 'id'
 MSG_KWD_SESSIONID = 'session_id'
 MSG_TYPE_PING = 'ping'
 MSG_TYPE_REQUEST = 'request'
@@ -133,7 +134,8 @@ class JobSubprocess:
         self.call, self.expectedResults = build_job_call(
             request[MSG_KWD_VIDEO], request[MSG_KWD_REPLAYS], 
             skip=request.get(MSG_KWD_INTERVAL, None),
-            quality=request.get(MSG_KWD_QUALITY, None)
+            quality=request.get(MSG_KWD_QUALITY, None),
+            videoID=request.get(MSG_KWD_VIDEOID, None)
         )
         self.process = None
         self.future = Future()
@@ -252,7 +254,7 @@ class WSVideoProcessor:
         try:
         
             # parse and validate the message 
-            self.request = WSVideoProcessor.parse_message(msgdict)            
+            self.request = WSVideoProcessor.parse_message(msgdict)      
             WSVideoProcessor.validate_request_dict(self.request)
                         
             # dont allow users to overload the system
@@ -302,10 +304,12 @@ class WSVideoProcessor:
             replays = msgdict.get(MSG_KWD_REPLAYS, [])
             skip = msgdict.get(MSG_KWD_INTERVAL, None)
             quality = msgdict.get(MSG_KWD_QUALITY, None)
+            videoID = msgdict.get(MSG_KWD_VIDEOID, None)
             return {
                 MSG_KWD_TYPE: MSG_TYPE_REQUEST, MSG_KWD_VIDEO: video, 
                 MSG_KWD_REPLAYS: replays, MSG_KWD_REQID: requestID,
-                MSG_KWD_INTERVAL: skip, MSG_KWD_QUALITY: quality
+                MSG_KWD_INTERVAL: skip, MSG_KWD_QUALITY: quality,
+                MSG_KWD_VIDEOID: videoID
             }
             
         except KeyError:

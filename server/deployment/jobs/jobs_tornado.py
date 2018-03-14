@@ -29,6 +29,7 @@ ARG_OUTFILE = 'outfile'
 ARG_SKIP = 'skip'
 ARG_REPLAYS = 'replays'
 ARG_QUALITY = 'quality'
+ARG_VIDEOID = 'id'
 
 
 
@@ -76,7 +77,8 @@ def parse_int(arg, reverse=False):
 
 KEY2PARSER = {
     ARG_VIDEO: parse_str, ARG_OUTFILE: parse_str, ARG_SKIP: parse_float, 
-    ARG_REPLAYS: parse_replay_pairs, ARG_QUALITY: parse_int
+    ARG_REPLAYS: parse_replay_pairs, ARG_QUALITY: parse_int,
+    ARG_VIDEOID: parse_str
 }
 
     
@@ -96,7 +98,7 @@ def parse_args(args):
 # MAIN FUNCTIONS ##############################################################
 # #############################################################################
 
-def build_job_call(video, replays=None, skip=None, outfile=None, quality=None):
+def build_job_call(video, replays=None, skip=None, outfile=None, quality=None, videoID=None):
     """Builds a call that cal be invoked with Subprocess.call and will call the main() function here."""
     if outfile is None: outfile = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
     if replays is None: replays = []
@@ -105,6 +107,7 @@ def build_job_call(video, replays=None, skip=None, outfile=None, quality=None):
     toCall.append(parse_arg(ARG_OUTFILE, outfile, True))
     if skip is not None: toCall.append(parse_arg(ARG_SKIP, skip, True))
     if quality is not None: toCall.append(parse_arg(ARG_QUALITY, quality, True))
+    if videoID is not None: toCall.append(parse_arg(ARG_VIDEOID, videoID, True))
     toCall.append(parse_arg(ARG_REPLAYS, replays, True))
     return toCall, outfile
 
@@ -114,22 +117,33 @@ def main(**args):
     
     # imports
     from jobs.jobs import Job
+    from shutil import copy2
     
     # check arguments
-    if 'video' not in args: raise RuntimeError('Missing required argument: video')
-    if 'outfile' not in args: raise RuntimeError('Missing required argument: outfile')
-    video = args['video']
-    outfile = args['outfile']
-    replays = args.get('replays', None)
-    skip = args.get('skip', None)
+    if ARG_VIDEO not in args: raise RuntimeError('Missing required argument: %s' % ARG_VIDEO)
+    if ARG_OUTFILE not in args: raise RuntimeError('Missing required argument: %s' % ARG_OUTFILE)
+    video = args[ARG_VIDEO]
+    outfile = args[ARG_OUTFILE]
+    replays = args.get(ARG_REPLAYS, None)
+    skip = args.get(ARG_SKIP, None)
+    quality = args.get(ARG_QUALITY, None)
+    videoID = args.get(ARG_VIDEOID, None)
     
     # run the job
-    job = Job.from_urls(video, replays=replays, skip=skip, quality=None, verbose=True)
-    job.run()
-    job.cleanup()
+    job = Job.from_urls(
+        video, replays=replays, skip=skip, quality=quality, verbose=True, 
+        videoID=videoID
+    )
+    if job.results is None:
+        job.run()
+        job.cleanup()
     
-    # write the results
-    open(outfile, 'w').write(job.results.as_json_string())
+        # write the results
+        open(outfile, 'w').write(job.results.as_json_string())
+        
+    # if the results were downloaded from the vgv database, just return those
+    else:
+        copy2(job.results, outfile)
     
 
 if __name__ == '__main__': main(**parse_args(sys.argv[1:]))

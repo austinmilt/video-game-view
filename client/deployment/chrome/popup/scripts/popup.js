@@ -371,7 +371,8 @@ function post_request_to_background(requestData) {
     // now that we have the details, post to the background
     port.postMessage({
         'action': 'request', 'video': requestData['video'], 
-        'replays': requestData['replays'], 'title': requestData['title']
+        'replays': requestData['replays'], 'title': requestData['title'],
+        'id': requestData['id']
     });
 }
 

@@ -141,7 +141,9 @@ class JobOptions:
         self.SCRATCH = m.get_file('scratch_directory')
         self.CRED = m.get_file('gcp_credentials')
         self.REPLAY_BUCKET = m.get_string('gcp_replay_bucket')
+        self.RESULTS_BUCKET = m.get_string('gcp_results_bucket')
         self.UPLOAD_NEW_REPLAYS = m.get_boolean('gcp_upload_new_replays')
+        self.UPLOAD_NEW_RESULTS = m.get_boolean('gcp_upload_new_results')
         self.FLOAT_PRECISION = m.get_int('json_float_precision')
         
         
