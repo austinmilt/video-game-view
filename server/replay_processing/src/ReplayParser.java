@@ -83,7 +83,9 @@ public class ReplayParser {
     public static final Predicate<Entity> IS_HERO = new Predicate<Entity>() {
         public boolean apply(Entity e) {
             boolean flag = e.getDtClass().getDtName().startsWith("CDOTA_Unit_Hero");
-            if (flag) {
+            if (flag) { flag = e.hasProperty("m_nPlayerOwnerID"); }
+            if (flag) { flag = (e.getProperty("m_nPlayerOwnerID").equals(-1)); }
+            if (flag && e.hasProperty("m_hReplicatingOtherHeroModel")) {
                 flag = e.getProperty("m_hReplicatingOtherHeroModel").equals(ENTITY_NULL);
             }
             return flag;

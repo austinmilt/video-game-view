@@ -400,7 +400,7 @@ class JobResults:
         """
         from google.cloud import storage
         from uuid import uuid4
-        import gzip, threading
+        import gzip
         assert job.video is not None, 'Job has not been run yet.'
         assert job.replays is not None, 'Job has not been run yet.'
         self.job = job
@@ -472,20 +472,17 @@ class JobResults:
             
         # upload results to the VGV database
         if OPTIONS.JB.UPLOAD_NEW_RESULTS and (self.job.remoteInfo['id'] is not None):
+            _pg_('Uploading new results to the cloud for expedited processing.')
             gcpClient = storage.Client.from_service_account_json(OPTIONS.JB.CRED)
             gcpBucket = gcpClient.get_bucket(OPTIONS.JB.RESULTS_BUCKET)
             remoteFile = construct_results_filename(self.job.remoteInfo['id'])
             temp = os.path.join(OPTIONS.JB.SCRATCH, str(uuid4()))
             with gzip.open(temp, 'wb') as f: f.write(self.as_json_string())
-            def upload():
-                blob = gcpBucket.blob(remoteFile)
-                blob.metadata = self.job.remoteInfo
-                blob.upload_from_filename(temp)
-                try: os.remove(temp)
-                except: print 'Unable to delete temporary file %s' % temp
-                
-            thread = threading.Thread(target=upload)
-            thread.start()
+            blob = gcpBucket.blob(remoteFile)
+            blob.metadata = self.job.remoteInfo
+            blob.upload_from_filename(temp)
+            try: os.remove(temp)
+            except: print 'Unable to delete temporary file %s' % temp
             
             
     def __repr__(self):

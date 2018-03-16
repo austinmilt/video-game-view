@@ -1,9 +1,9 @@
 <component name="libraryTable">
-  <library name="com.skadistats:clarity:2.2-SNAPSHOT" type="repository">
-    <properties maven-id="com.skadistats:clarity:2.2-SNAPSHOT" />
+  <library name="com.skadistats:clarity:2.3-SNAPSHOT" type="repository">
+    <properties maven-id="com.skadistats:clarity:2.3-SNAPSHOT" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/skadistats/clarity/2.2-SNAPSHOT/clarity-2.2-SNAPSHOT.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/skadistats/clarity-protobuf/4.7/clarity-protobuf-4.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/skadistats/clarity/2.3-SNAPSHOT/clarity-2.3-SNAPSHOT.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/skadistats/clarity-protobuf/4.9/clarity-protobuf-4.9.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/2.6.1/protobuf-java-2.6.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1.1.1.6/snappy-java-1.1.1.6.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.13/slf4j-api-1.7.13.jar!/" />
