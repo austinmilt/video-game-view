@@ -375,7 +375,7 @@ class Job:
             if verbose: _pg_('Building job.')
             job = Job(videoFile, replayFiles, keyFile, skip)
             job.remoteInfo = {
-                'skip': skip, 'quality': quality, 'id': videoID, 
+                'skip': job.skip, 'quality': quality, 'id': videoID, 
                 'has_replays': hasReplays
             }
             return job
@@ -444,7 +444,11 @@ class JobResults:
                     
                 # otherwise, fill in with the known keys
                 else:
-                    abilities = [[self.job.keys.get(k[0], None), k[1]] for k in state.data['abilities']]
+                    def get_k1(k):
+                        if len(k) > 1: return k[1]
+                        else: return '0'
+                        
+                    abilities = [[self.job.keys.get(k[0], None), get_k1(k)] for k in state.data['abilities']]
                     items = [self.job.keys.get(k, None) for k in state.data['items']]
                     
                 # remove all the None abilities after the last non-None
