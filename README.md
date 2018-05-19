@@ -1,3 +1,5 @@
+Note due to low usage and other responsibilities, this repository (including the Chrome extension, server, and other code) is no longer being actively maintained. If you are interested in contributing or using the extension, open an issue or contact the main author.
+
 # <img align="left" width="100" height="100" src="https://storage.googleapis.com/vgv-marketing/icon.png"> Video Game View
 
 
